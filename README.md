@@ -11,7 +11,7 @@ the pot, so nothing but a small gearbox and the stirring shaft is above the food
                  ┌──────────── gearbox (bevel gears, 2 bearings per shaft)
                  │      ╲
                  │       ╲  input rod, 30° from vertical
-   output shaft  │        ╲  + wooden arm 40×20 beside it (holds the gearbox)
+   output shaft  │        ╲  + wooden arm 20×40 beside it (holds the gearbox)
    (stainless)   │         ╲
                  │          ╲
         ┌────────┴────┐   [motor]  ← RS-550 in a printed cradle
@@ -22,8 +22,8 @@ the pot, so nothing but a small gearbox and the stirring shaft is above the food
 1. **Motor:** TOPOWER 550-18V (RS-550 class, Ø38 mm), clamped in a printed cradle on a board.
 2. **Flexible coupler:** connects the 3.175 mm motor shaft to a 6 mm steel input rod.
 3. **Input rod:** goes up at 30° from vertical to the gearbox.
-4. **Wooden arm:** 40×20 mm, runs parallel to the rod. It slides into a socket on the
-   gearbox and is the only thing holding the gearbox above the pot.
+4. **Wooden arm:** 20×40 mm, standing on edge (the 40 mm side in the bending plane),
+   runs parallel to the rod. It is the only thing holding the gearbox above the pot.
 5. **Gearbox:** a straight bevel pair turns the tilted input into a vertical output
    (15T → 29T, about 1.93:1 reduction).
 6. **Output shaft:** 6 mm stainless rod with a wooden paddle, straight down into the pot.
@@ -43,11 +43,14 @@ the pot, so nothing but a small gearbox and the stirring shaft is above the food
 
   <img src="img/gear_boss.png" width="400" alt="gear hub boss">
 
-- The arm socket takes a 40×20 wooden arm, fixed with 4 countersunk wood screws.
+- Arm mount: each housing half has one flat cheek that sits against a side of the
+  arm, with 2 countersunk wood screws per cheek. The screws on the two sides are
+  staggered so they don't meet inside the 20 mm wood. A cap on top is the end stop,
+  so the arm end carries the gearbox weight, not the screws. The arm is not boxed in.
 
 **Hardware:** 4× 626 bearing (the lowest output bearing must be 626-2RS),
 6 mm stainless rod, 2× M3 grub screw + nut, 6× M3×12 bolt + nut,
-4× 4 mm countersunk wood screw (~25 mm), 2× 6 mm shaft collar, flexible coupler.
+4× 4 mm countersunk wood screw (~20 mm), 2× 6 mm shaft collar, flexible coupler.
 
 ## Motor mount – `motor_mount_45.scad`
 

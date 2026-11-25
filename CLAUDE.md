@@ -10,8 +10,9 @@ the stirring shaft sits above the food.
    paddle at the end (paddle not modelled yet).
 3. **Input rod** – 6 mm steel rod running at 30° from vertical, from the motor up
    to the gearbox.
-4. **Holding arm** – wooden 40×20 mm arm, parallel to the input rod, from the motor
-   board up into a socket on the gearbox housing. It is the only thing holding the
+4. **Holding arm** – wooden 20×40 mm arm standing on edge (40 mm in the shaft
+   plane = the plane gravity bends it in), parallel to the input rod, from the motor
+   board up between two cheeks on the gearbox housing. It is the only thing holding the
    gearbox in the air. Not a printed part (plain wood), shown as a ghost in the assembly.
 5. **Motor mount (bottom, beside the pot)** – `motor_mount_45.scad`. Cradle + 2 clamp
    caps for the TOPOWER 550-18V motor (RS-550, Ø38 mm body, 3.175 mm shaft), on a
@@ -65,9 +66,14 @@ the stirring shaft sits above the food.
 - Housing split in two halves in the plane of both shafts (x=0), joined by 6 M3
   bolts through a flange; flange is trimmed flush with the bearing-tube ends so
   shaft exits stay open. Print halves split-face down, supports on build plate only.
-- Mounting: socket on the outer side of the input tube (away from the pot) for the
-  wooden arm 40×20 mm; 4 countersunk 4 mm wood screws through the socket side walls
-  (2 per half). No mounting on top of the housing (unreachable).
+- Mounting: on the outer side of the input tube (away from the pot), 4 mm gap.
+  Arm 20 wide (`arm_w`, across) × 40 deep (`arm_t`, in the shaft plane) – on edge,
+  because gravity bends it in the shaft plane. Not boxed in (user's call): each half
+  has one flat cheek (`cheek_t` 6) against a side of the arm + a cap (`cap_t` 4) on
+  top as end stop (weight goes into the arm end, not the screws). 2 countersunk
+  4 mm wood screws per cheek, pattern `screw_pat` mirrored on side B so screws from
+  both sides never meet. Cheeks need build-plate supports (they bridge the arm gap).
+  No mounting on top of the housing (unreachable).
 - `part` selects output: assembly, housing_a, housing_b, gear_out, gear_in, spacer, print_all.
 - Coordinate frame: output axis = +Z through origin (pitch base at z=0, shaft goes
   down), input gear on +Y side; `in_frame()` maps children into the input-shaft frame.

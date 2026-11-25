@@ -15,12 +15,13 @@
 //   - 6 mm steel rod: output shaft (stainless, into the food) + input stub
 //   - 2x M3 grub screw + 2x M3 nut (gear set screws)
 //   - 6x M3x12 bolt + nut (housing halves)
-//   - 4x 4 mm countersunk wood screw, ~25 mm (housing -> wooden arm, 40x20)
+//   - 4x 4 mm countersunk wood screw, ~20 mm (2 per cheek, staggered) -> wooden arm
+//     20x40, standing on edge (40 mm side in the shaft plane)
 //   - 2x 6 mm shaft collar (stop shafts sliding back out)
 //   - flexible coupler (6 mm on the stub side) between motor/drill chuck and input stub
 //
 //  Printing: PETG / ASA / nylon, NOT PLA.  Housing halves split face down,
-//  "supports on build plate only" (gear cavity roof + arm socket roof).
+//  "supports on build plate only" (gear cavity roof + under the arm cheeks).
 //  Gears flat back down, no supports, 4+ perimeters, 40%+ infill.
 //
 //  Assembly: grub screw nut into the slot on the gear back -> gear on rod
@@ -68,19 +69,27 @@ bolt_d     = 3.4;     // M3 clearance
 nut_w      = 5.7;     // M3 nut across flats (+clearance)
 nut_h      = 2.6;
 
-/* [Mounting: socket for a wooden arm parallel to the input rod] */
+/* [Mounting: two cheeks clamping a wooden arm parallel to the input rod] */
 // The arm comes up from the motor board alongside the input rod (on the side
-// away from the pot), slides into the socket and is fixed with wood screws
-// driven sideways through the socket walls (2 per housing half).
+// away from the pot). It stands on edge: its tall side (arm_t) lies in the
+// shaft plane, which is the plane the gearbox weight bends it in.
+// Each housing half has one flat cheek against one side of the arm, wood
+// screws go sideways through the cheeks into the arm. A cap at the top
+// is the end stop, so the weight sits on the arm end, not on the screws.
+// The arm is not boxed in: its near and far faces stay open.
 mount       = true;
-arm_w       = 40;     // arm width  (across, perpendicular to the shaft plane)
-arm_t       = 20;     // arm thickness (towards/away from the input rod)
+arm_w       = 20;     // arm width  (across, perpendicular to the shaft plane)
+arm_t       = 40;     // arm depth  (in the shaft plane = bending direction)
 arm_clr     = 0.6;    // play around the wood
 arm_gap     = 4;      // air between input bearing tube and the arm
-socket_len  = 40;     // how deep the arm goes into the socket
-socket_wall = 6;
+socket_len  = 40;     // how far the cheeks run down the arm
+cheek_t     = 6;      // cheek thickness
+cap_t       = 4;      // end stop above the arm
 screw_d     = 4.5;    // 4 mm wood screw clearance
 screw_head_d = 8.5;   // countersink diameter
+// screw positions per cheek as fractions [across arm_t, along socket_len];
+// side B uses the mirrored pattern, so screws from the two sides never meet
+screw_pat   = [[0.25, 0.25], [0.75, 0.75]];
 
 /* [Set screw (M3 grub screw + nut trap in each gear)] */
 set_d = 3.2;
@@ -231,45 +240,48 @@ module flange() {
 
 side_dir = [0, cos(shaft_angle), sin(shaft_angle)];   // in-plane, away from the pot
 
-// arm socket, in the input-shaft frame (local z = input axis, local +y = away from pot)
+// arm mount, in the input-shaft frame (local z = input axis, local +y = away from pot)
 arm_y0   = tube_r + arm_gap;                 // arm face nearest to the rod
+arm_y1   = arm_y0 + arm_t;                   // arm face away from the rod
 sock_top = -gear_back - 1 - wall;            // flush with the bottom of the gear body
 sock_bot = sock_top - socket_len;
-sock_W   = arm_w + arm_clr + 2*socket_wall;
-sock_y0  = arm_y0 - arm_clr/2 - socket_wall;
-sock_y1  = arm_y0 + arm_t + arm_clr/2 + socket_wall;
-screw_z  = [sock_bot + 10, sock_top - 10];
+arm_top  = sock_top - cap_t;                 // arm end rests here (end stop)
+cheek_x  = arm_w/2 + arm_clr/2;              // inner face of each cheek
+cheek_y1 = arm_y1 + arm_clr/2;               // cheeks end flush with the far arm face
+
+// screw (y, z) positions for side sx (+1 = half A, -1 = half B)
+function screw_yz(sx) = [for (p = screw_pat)
+    [arm_y0 + arm_t*(sx > 0 ? p[0] : 1 - p[0]), sock_bot + socket_len*p[1]]];
 
 module mount_solid() {
     if (mount) in_frame() {
-        // socket box
-        translate([0, sock_y0, sock_bot])
-            cuboid([sock_W, sock_y1 - sock_y0, socket_len], anchor=FRONT+BOT, rounding=2, edges="Y");
-        // web tying the socket to the bearing tube
-        hull() {
-            translate([0, 0, sock_bot]) cuboid([2*tube_r - 4, 1, socket_len], anchor=BOT);
-            translate([0, sock_y0, sock_bot]) cuboid([2*tube_r - 4, 1, socket_len], anchor=BOT);
-        }
+        // one cheek per housing half; starts at the tube axis so it fuses with the tube
+        for (sx = [-1, 1])
+            translate([sx*cheek_x, 0, sock_bot])
+                cuboid([cheek_t, cheek_y1, socket_len],
+                       anchor=(sx > 0 ? LEFT : RIGHT)+FRONT+BOT, rounding=2, edges=[BACK+BOT]);
+        // cap / end stop over the arm, from cheek to cheek
+        translate([0, 0, arm_top])
+            cuboid([2*(cheek_x + cheek_t), cheek_y1, cap_t + 0.01], anchor=FRONT+BOT);
     }
 }
 module mount_holes() {
     if (mount) in_frame() {
-        // arm pocket, open towards the motor
+        // room for the arm: open towards the motor, towards the rod and away from it
         translate([0, arm_y0 - arm_clr/2, sock_bot - 1])
-            cube([arm_w + arm_clr, arm_t + arm_clr, socket_len + 1 - socket_wall/2]
-                 , anchor=FRONT+BOT);
-        // wood screws through both side walls, countersunk on the outside
-        for (sx = [-1, 1], z = screw_z)
-            translate([sx*(arm_w/2 + arm_clr/2), arm_y0 + arm_t/2, z]) {
-                xcyl(d=screw_d, l=2*socket_wall + 4, $fn=24);
-                translate([sx*socket_wall, 0, 0])
+            cuboid([arm_w + arm_clr, arm_t + arm_clr + 20, arm_top - sock_bot + 1], anchor=FRONT+BOT);
+        // wood screws through the cheeks, countersunk on the outside
+        for (sx = [-1, 1], p = screw_yz(sx))
+            translate([sx*cheek_x, p[0], p[1]]) {
+                xcyl(d=screw_d, l=2*cheek_t + 2, $fn=24);
+                translate([sx*cheek_t, 0, 0])
                     yrot(sx > 0 ? 90 : -90) cyl(d1=screw_d, d2=screw_head_d + 0.5,
                          h=(screw_head_d - screw_d)/2 + 0.25, anchor=TOP, $fn=32);
             }
     }
 }
 module arm_ghost() {
-    %in_frame() translate([0, arm_y0, sock_top - socket_wall/2 - 0.5])
+    %in_frame() translate([0, arm_y0, arm_top])
         cuboid([arm_w, arm_t, 220], anchor=FRONT+TOP);
 }
 
