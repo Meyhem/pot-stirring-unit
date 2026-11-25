@@ -58,6 +58,13 @@ the stirring shaft sits above the food.
   status checklist) and run `./render_images.sh` when geometry changed. Look at the
   new PNGs before committing. If you add a new part or file, add its image/camera to
   `render_images.sh` and a section to README.md.
+- **Regenerate + clean STLs after every iteration:** re-export EVERY current printable
+  part to `stl/` (gearbox: housing_a, housing_b, gear_in, gear_out, spacer; motor
+  mount: `part="mount"` → motor_mount_one_piece), check `Simple: yes`, and delete
+  any STL in `stl/` that no longer matches a current part (renamed/removed parts,
+  unused variants). Keep `stl/` = exactly the parts to print, no leftovers.
+  Re-exports that only reorder triangles (same sorted vertices, or same triangle
+  count + volume + bbox) → `git checkout` them, don't commit noise.
 - **Auto-push:** after every iteration (each finished change: geometry edit + checks,
   STL re-export, README/images, doc update) commit and `git push` to `origin main`
   without asking.
