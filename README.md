@@ -92,6 +92,15 @@ them with `-D 'style="three_piece"' -D 'part="cradle"'` (or `clamp`, `foot`).
 
 ## Printing
 
+| STL | Print | Supports |
+|---|---|---|
+| `housing_a.stl`, `housing_b.stl` | 1 each | build plate only (gear cavity roof, under the arm cheeks) |
+| `gear_out.stl`, `gear_in.stl` | 1 each | none |
+| `spacer.stl` | **2** (one per gear) | none |
+| `motor_mount_one_piece.stl` | 1 | build plate only (under the back of the motor ring) |
+
+All STLs are already in print orientation.
+
 - **PETG / ASA / nylon only.** Not PLA: it is too close to heat and steam.
 - Housing halves: split face down, supports touching the build plate only.
 - Gears: flat back down, no supports, 4+ perimeters, 40%+ infill.
