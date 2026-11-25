@@ -16,9 +16,9 @@ R=(xvfb-run -a openscad --imgsize=1200,900 --colorscheme=Tomorrow)
     -D 'part="print_all"' angled_gearbox.scad
 
 # Motor mount (one-piece: foot + arm cheeks + split motor ring)
-"${R[@]}" -o img/motor_mount.png --camera=0,-40,90,90,0,90,600 \
+"${R[@]}" -o img/motor_mount.png --camera=0,-50,100,90,0,90,650 \
     -D 'part="assembly"' motor_mount.scad
-"${R[@]}" -o img/motor_mount_3d.png --camera=0,-30,60,55,0,235,480 \
+"${R[@]}" -o img/motor_mount_3d.png --camera=0,-40,70,60,0,230,450 \
     -D 'part="assembly"' motor_mount.scad
 "${R[@]}" --render -o img/motor_mount_print_parts.png --camera=0,-20,50,120,0,40,420 \
     -D 'part="mount"' motor_mount.scad

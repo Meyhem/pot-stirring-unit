@@ -17,10 +17,9 @@
 // 90 - shaft_angle to a horizontal board
 shaft_angle = 30;
 
-/* [Shared: drill chuck on the motor shaft] */
-chuck_d   = 55;       // thickest part of the drill chuck
-chuck_len = 90;       // body length incl. sleeve (only for the ghost – measure yours)
-chuck_clr = 4;        // air between the spinning chuck and the arm
+/* [Shared: drill head on the motor (planetary gearbox + clutch collar + chuck)] */
+chuck_d   = 55;       // thickest part of the drill head (the clutch collar)
+chuck_clr = 4;        // air between the drill head and the arm
 
 /* [Shared: wooden arm (20x40 on edge)] */
 arm_w    = 20;        // across (x)

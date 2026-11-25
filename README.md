@@ -25,9 +25,10 @@ the pot, so nothing but a small gearbox and the stirring shaft is above the food
    board at 60°, and the motor cradle and the gearbox both grip it.
 2. **Motor:** TOPOWER 550-18V (RS-550 class, Ø38 mm), in a printed cradle that hangs
    under the arm, on the same axis as the gearbox input.
-3. **Drill chuck:** on the motor shaft (Ø55 mm at its thickest). It grips the 6 mm
-   steel input rod directly. The arm sits 31.5 mm from the rod axis, so the spinning
-   chuck clears it by 4 mm.
+3. **Drill head:** the motor drives a drill head: a planetary gearbox, a clutch collar
+   (Ø55 mm, the thickest part) and a keyless chuck. The chuck grips the 6 mm steel
+   input rod directly. The arm sits 31.5 mm from the rod axis, so the drill head
+   clears it by 4 mm.
 4. **Input rod:** goes up at 30° from vertical to the gearbox.
 5. **Gearbox:** a straight bevel pair turns the tilted input into a vertical output
    (15T → 29T, about 1.93:1 reduction).
@@ -73,11 +74,12 @@ pattern) live in `common.scad`.
 - **Plate:** screws to the board (4 wood screws). The arm's bottom end sits on it at 60°.
   Cut the arm's end 30° off square so it sits flat.
 - **Cheeks:** one along each side of the arm, 4 wood screws per side (staggered).
-- **Motor ring:** under the arm, on the gearbox input axis. It has a slit at the bottom
-  that two M4 bolts pinch shut, and a small lip at the back that stops the motor
-  sliding backwards.
-- **Assembly:** push the motor into the ring from the front, rear end first; the
-  chuck stays in front. Tighten the two pinch bolts. Set how deep the chuck grips the
+- **Motor ring:** under the arm, on the gearbox input axis. It grips only the front
+  39 mm of the can: the rear 18 mm (vent slots + end cap) stays open for cooling.
+  A slit at the bottom is pinched shut by two M4 bolts.
+- **Assembly:** push the motor into the ring from the front, rear end first, until
+  the drill's beige gearbox housing sits against the ring's front face. That's also
+  what stops the motor sliding backwards. Tighten the two pinch bolts. Set how deep the chuck grips the
   rod by sliding the rod in the chuck.
 - **Clearance:** the motor terminals stay 10 mm above the board.
 
@@ -121,6 +123,6 @@ openscad -o stl/motor_mount_one_piece.stl -D 'part="mount"' motor_mount.scad
 - [x] Motor mount on the arm, with clearance for the drill chuck
 - [x] One-piece motor mount (foot + cheeks + split motor ring)
 - [ ] Print and test gearbox v4 and the motor mount (check the ring fit first)
-- [ ] Measure the real chuck length (the model assumes 90 mm)
+- [ ] Measure the drill head (gearbox / collar / chuck lengths are estimated from a photo)
 - [ ] Wooden paddle
 - [ ] Full-unit assembly model (gearbox + arm + motor mount)

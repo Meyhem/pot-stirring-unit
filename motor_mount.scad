@@ -64,7 +64,12 @@ motor_d    = 38;     // measured body diameter
 motor_len  = 57;     // body length without shaft (RS-550 ≈ 57)
 motor_clr  = 0.3;    // diametral clearance in the bore
 rear_clear = 12;     // space behind the motor for terminals + wires
-chuck_gap  = 3;      // motor front face -> back of the chuck
+// drill head in front of the can (ghost only; estimated from a photo – measure)
+head_gb_d    = 44;   // beige planetary gearbox housing incl. screw ribs
+head_gb_len  = 40;
+head_col_len = 20;   // clutch collar (Ø chuck_d, the thickest part)
+head_ch_d    = 44;   // chuck body
+head_ch_len  = 43;
 
 /* [Cradle (hangs under the arm)] */
 cradle_len  = 54;    // along the motor axis, from the motor's rear face
@@ -89,13 +94,18 @@ nut_depth  = 7;      // nut slot depth above the cradle face
 /* [One-piece: split ring (pinch clamp) around the motor] */
 ring_clr    = 0.4;   // diametral clearance of the ring bore (tune to your printer)
 ring_t      = 5;     // ring wall
-ring_len    = 54;    // along the motor axis, from the motor rear face
+// The ring grips only the FRONT part of the can: the rear vent slots
+// (~8-13 mm from the rear face) and the end cap stay open for cooling.
+// The motor can't slide back: the drill gearbox housing in front of the can
+// is wider than the bore and sits against the ring's front face.
+ring_z0     = 18;    // ring starts this far in front of the motor rear face
+ring_len    = motor_len - ring_z0;   // ... and ends flush with the can front
 slit_w      = 3;     // pinch slit at the bottom (closing it by 3 mm squeezes Ø by ~1 mm)
-lip_w       = 2.5;   // rear lip: stops the motor sliding back (0 = no lip)
+lip_w       = 0;     // optional inward lip at the ring's rear end (0 = none)
 lip_t       = 2.5;
 ear_hw      = 11;    // pinch ears: half width (across, bolt direction)
 ear_drop    = 12;    // how far the ears reach below the bore
-pinch_z     = [0.25, 0.75];  // pinch bolt positions as fractions of ring_len
+pinch_z     = [0.25, 0.75];  // pinch bolt positions as fractions of the ring length
 pinch_cb    = 4;     // head counterbore depth (+x ear)
 pinch_nut_d = 4;     // nut trap depth (-x ear)
 plate_hw1   = 38;    // one-piece plate half width (board screws clear of the ring)
@@ -143,8 +153,9 @@ function arm2world(p) = let(q = [p[0], p[1] - arm_y0, p[2]])
 Rr = (motor_d + ring_clr)/2;     // one-piece ring bore radius
 low_pts = style == "one_piece" ? [
     [-R,                -rear_clear],                // terminals / wires
-    [-(Rr + ring_t),    -lip_t],                     // ring + lip, rear bottom edge
-    [-(Rr + ear_drop),  -lip_t]                      // pinch ears, rear bottom edge
+    [-R,                 0],                         // bare rear end of the can
+    [-(Rr + ring_t),    ring_z0 - lip_t],            // ring rear bottom edge
+    [-(Rr + ear_drop),  ring_z0 - lip_t]             // pinch ears, rear bottom edge
 ] : [
     [-R,              -rear_clear],                 // terminals / wires
     [-R,               0],                          // rear edge of the motor body
@@ -264,8 +275,8 @@ module foot() {
 // ---------------------------------------------------------------------
 // One piece: foot plate + continuous arm cheeks + split ring (world frame)
 // ---------------------------------------------------------------------
-op_top   = motor_z + ring_len;                 // cheeks end with the ring (arm frame z)
-pinch_y  = -(Rr + (ear_drop - lip_w)/2 + 1);   // pinch bolt axis, below the bore
+op_top   = motor_z + ring_z0 + ring_len;       // cheeks end with the ring (arm frame z)
+pinch_y  = -(Rr + ear_drop/2);                 // pinch bolt axis, below the bore
 
 module ring_2d() {
     union() {
@@ -293,19 +304,20 @@ module one_piece() {
                         translate([sx > 0 ? cheek_x : -cw, arm_y0, -2*arm_t])
                             cube([cheek_t, arm_t + arm_clr/2, 2*arm_t + op_top]);
                     // ring + web, incl. the rear lip
-                    translate([0, 0, motor_z - lip_t]) linear_extrude(ring_len + lip_t) ring_2d();
+                    translate([0, 0, motor_z + ring_z0 - (lip_w > 0 ? lip_t : 0)])
+                        linear_extrude(ring_len + (lip_w > 0 ? lip_t : 0)) ring_2d();
                 }
                 translate([-150, -300, 0]) cube([300, 600, 400]);
             }
         }
-        ARM() translate([0, 0, motor_z]) {
-            // motor bore, open at the front; lip at the rear
-            cylinder(r = Rr, h = ring_len + 1);
-            translate([0, 0, -lip_t - 1]) cylinder(r = Rr - lip_w, h = lip_t + 2);
+        ARM() translate([0, 0, motor_z + ring_z0]) {
+            // motor bore, open at the front (and at the rear unless there's a lip)
+            translate([0, 0, lip_w > 0 ? 0 : -1]) cylinder(r = Rr, h = ring_len + 2);
+            if (lip_w > 0) translate([0, 0, -lip_t - 1]) cylinder(r = Rr - lip_w, h = lip_t + 2);
             // pinch slit through the bottom wall, the ears and the lip
             translate([-slit_w/2, -(Rr + ear_drop + 1), -lip_t - 1]) cube([slit_w, ear_drop + lip_w + 2, ring_len + lip_t + 2]);
             // pinch bolts across the slit: head counterbore on +x, nut trap on -x
-            for (f = pinch_z) translate([0, pinch_y, ring_len*f]) {
+            for (f = pinch_z) translate([0, pinch_y, ring_len*f]) {  // (z relative to ring start)
                 rotate([0, 90, 0]) cylinder(d = bolt_d, h = 2*ear_hw + 2, center = true, $fn = 24);
                 translate([ear_hw - pinch_cb, 0, 0]) rotate([0, 90, 0]) cylinder(d = head_d, h = pinch_cb + 1, $fn = 32);
                 translate([-ear_hw - 1, 0, 0]) rotate([0, 90, 0]) rotate([0, 0, 30])
@@ -328,12 +340,17 @@ module one_piece() {
 // ---------------------------------------------------------------------
 // Ghosts for the assembly view (arm frame)
 // ---------------------------------------------------------------------
+head_len = head_gb_len + head_col_len + head_ch_len;
 module motor_ghost() {
-    color("dimgray") cylinder(d = motor_d, h = motor_len);
-    color("silver") translate([0, 0, motor_len]) cylinder(d = 3.175, h = chuck_gap + 2, $fn = 24);
+    color("silver") cylinder(d = motor_d, h = motor_len);
+    color("black") for (a = [0, 180]) rotate(a) translate([-5, -(motor_d/2 + 0.2), 8]) cube([10, 1, 5]); // vent slots
     color("goldenrod") translate([-5, -2.5, -6]) cube([10, 5, 6]);                    // terminals
-    color("darkorange", 0.8) translate([0, 0, motor_len + chuck_gap]) cylinder(d = chuck_d, h = chuck_len);
-    color("silver") translate([0, 0, motor_len + chuck_gap + chuck_len - 30]) cylinder(d = 6, h = 150, $fn = 24);
+    translate([0, 0, motor_len]) {
+        color("tan", 0.9) cylinder(d = head_gb_d, h = head_gb_len);                    // planetary gearbox
+        color("darkorange", 0.8) translate([0, 0, head_gb_len]) cylinder(d = chuck_d, h = head_col_len);  // clutch collar
+        color("dimgray") translate([0, 0, head_gb_len + head_col_len]) cylinder(d1 = head_ch_d, d2 = head_ch_d - 10, h = head_ch_len);
+        color("silver") translate([0, 0, head_len - 25]) cylinder(d = 6, h = 150, $fn = 24);   // input rod
+    }
 }
 module arm_ghost() {
     // bottom end cut parallel to the board
@@ -381,10 +398,12 @@ else if (part == "print_all") {
 // Report
 // ---------------------------------------------------------------------
 low_world = min([for (p = low_pts) arm2world([0, p[0], motor_z + p[1]])[2]]);
-chuck_end = motor_z + motor_len + chuck_gap + chuck_len;
+chuck_end = motor_z + motor_len + head_len;
 echo(str("Arm at ", 90 - shaft_angle, "° to the board, near face ", arm_y0, " mm from the rod axis"));
 echo(str("Chuck clearance to the arm: ", arm_y0 - chuck_d/2, " mm"));
 echo(str("Motor rear face at ", motor_z, " mm along the arm (near face, from the foot plate); lowest point ",
          low_world, " mm above the board"));
 echo(str("Chuck front at ", chuck_end, " mm along the arm"));
+if (style == "one_piece") echo(str("Ring grips the can from ", ring_z0, " to ", ring_z0 + ring_len,
+    " mm (of ", motor_len, "); rear ", ring_z0, " mm open for the vents"));
 echo(str("Foot plate ", 2*(style == "one_piece" ? plate_hw1 : plate_hw), " x ", plate_y1 - plate_y0, " mm (", style, ")"));
