@@ -364,6 +364,31 @@ module board_ghost() {
 }
 
 // ---------------------------------------------------------------------
+// Fit checks – run by `make check` (tools/check_fit.py). Each must be EMPTY.
+// ---------------------------------------------------------------------
+module mm_check(what) {
+    // the motor can, in its bore
+    if (what == "mount_vs_motor")
+        intersection() { one_piece(); ARM() translate([0, 0, motor_z]) cylinder(d = motor_d, h = motor_len); }
+    // drill head in front of the can (it rests on the ring face -> start 0.01 later),
+    // checked as gearbox housing + Ø chuck_d for everything in front of it
+    if (what == "mount_vs_drill_head")
+        intersection() { one_piece(); ARM() translate([0, 0, motor_z + motor_len + 0.01]) {
+            cylinder(d = head_gb_d, h = head_gb_len);
+            translate([0, 0, head_gb_len]) cylinder(d = chuck_d, h = head_col_len + head_ch_len);
+        } }
+    // the wooden arm (shrunk 0.01 – it touches the seat and the plate face to face)
+    if (what == "mount_vs_arm")
+        intersection() { one_piece(); intersection() {
+            ARM() translate([-arm_w/2 + 0.01, arm_y0 + 0.01, -2*arm_t]) cube([arm_w - 0.02, arm_t - 0.02, arm_len]);
+            translate([-200, -500, base_t + 0.01]) cube([400, 1000, 1000]);
+        } }
+    // nothing below the board
+    if (what == "mount_vs_board")
+        intersection() { one_piece(); translate([-500, -500, -100]) cube([1000, 1000, 100 - 0.001]); }
+}
+
+// ---------------------------------------------------------------------
 // Output
 // ---------------------------------------------------------------------
 if (part == "assembly") {

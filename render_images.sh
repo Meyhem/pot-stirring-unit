@@ -5,7 +5,19 @@ set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p img
 
-R=(xvfb-run -a openscad --imgsize=1200,900 --colorscheme=Tomorrow)
+LOG=$(mktemp)
+trap 'rm -f "$LOG"' EXIT
+# quiet render: print OpenSCAD's output only if it fails or warns
+render() {
+    local out
+    out=$(printf '%s\n' "$@" | grep -m1 '\.png$')
+    if ! xvfb-run -a openscad --imgsize=1200,900 --colorscheme=Tomorrow "$@" >"$LOG" 2>&1; then
+        cat "$LOG"; echo "FAILED: $out"; exit 1
+    fi
+    grep -E "WARNING|ERROR" "$LOG" || true
+    echo "render  $out"
+}
+R=(render)
 
 # Gearbox
 "${R[@]}" -o img/gearbox_cutaway.png --camera=0,35,-15,62,0,125,400 \

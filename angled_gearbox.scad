@@ -338,6 +338,22 @@ module half(side) {   // side = +1 -> A (x>0), -1 -> B (x<0)
 }
 
 // ---------------------------------------------------------------------
+// Fit checks – run by `make check` (tools/check_fit.py). Each must be EMPTY.
+// ---------------------------------------------------------------------
+module gb_check(what) {
+    if (what == "gear_vs_gear")
+        intersection() { gear_out(); in_frame() gear_in(); }
+    if (what == "housing_vs_gears")
+        intersection() { housing(); union() { gear_out(); in_frame() gear_in(); } }
+    // axial stop: a gear pushed almost the full axial_gap towards the wall
+    // must not touch the housing yet (the boss meets the pad first)
+    if (what == "axial_stop_out")
+        intersection() { housing(); up(axial_gap - 0.05) gear_out(); }
+    if (what == "axial_stop_in")
+        intersection() { housing(); in_frame() up(axial_gap - 0.05) gear_in(); }
+}
+
+// ---------------------------------------------------------------------
 // Output
 // ---------------------------------------------------------------------
 module shafts() {

@@ -7,3 +7,6 @@
 .~lock.*
 # local Claude settings
 .claude/settings.local.json
+# build leftovers
+stl/*.log
+__pycache__/

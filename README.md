@@ -109,12 +109,29 @@ Requires [OpenSCAD](https://openscad.org) and [BOSL2](https://github.com/BelfryS
 (for the gearbox), installed in your OpenSCAD libraries folder.
 
 ```bash
-# export one part (see `part` at the top of each .scad for the options)
-openscad -o stl/housing_a.stl -D 'part="housing_a"' angled_gearbox.scad
-openscad -o stl/motor_mount_one_piece.stl -D 'part="mount"' motor_mount.scad
-# regenerate all images in this README (needs xvfb-run when run headless)
-./render_images.sh
+make            # build every printable STL into stl/ (only the ones whose source changed)
+make check      # check all STLs + run the fit checks (see below)
+make prune      # delete STLs in stl/ that are no longer current parts
+make images     # re-render the README images (needs xvfb-run when headless)
+make all-in     # all of the above
+make rebuild    # force a re-export of every STL
 ```
+
+A single part by hand: `openscad -o x.stl -D 'part="housing_a"' angled_gearbox.scad`
+(see `part` at the top of each .scad for the options).
+
+### Checks
+
+`make check` runs two tools (Python 3, no extra packages):
+
+- **`tools/check_stl.py`** – checks each STL for printability: watertight and manifold
+  (every edge shared by exactly 2 triangles), consistent winding, positive volume
+  (normals pointing outwards), no collapsed triangles, one body per file, and that it
+  fits the bed (`make check BED="220 220 250"`). It works on any STL:
+  `tools/check_stl.py some.stl`.
+- **`tools/check_fit.py`** – geometry checks in OpenSCAD; each one must come out
+  empty: gear vs gear, housing vs gears, the axial stops (a gear pushed 0.25 mm towards
+  the wall must not touch it), and motor mount vs motor, drill head, arm and board.
 
 ## Status / open items
 
