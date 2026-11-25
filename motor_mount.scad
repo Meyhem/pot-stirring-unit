@@ -4,22 +4,34 @@
 //  with a drill chuck (Ø55 at its thickest) on the shaft that grips the
 //  6 mm input rod directly.
 //
-//  The wooden arm (20x40, on edge) is the spine of the whole unit:
-//   - the FOOT holds the arm's bottom end on the board at 90 - shaft_angle
-//     (60° for the default 30° input),
-//   - the CRADLE grips the arm with two cheeks + wood screws and holds the
-//     motor underneath it, coaxial with the gearbox input,
-//   - the gearbox grips the top end of the arm the same way.
+//  The wooden arm (20x40, on edge) is the spine of the whole unit; the
+//  gearbox grips its top end, this part grips its bottom end.
+//
+//  style = "one_piece" (default): ONE print = foot plate on the board +
+//  two cheeks along the arm sides + a split ring around the motor under the
+//  arm. The arm end sits on the plate at 90 - shaft_angle (60°), the motor
+//  sits coaxial with the gearbox input. The ring has a slit at the bottom
+//  and two M4 pinch bolts; a rear lip stops the motor sliding back.
+//  Insert the motor from the FRONT, rear end first (the chuck stays in
+//  front of the ring – it doesn't fit through). Set how deep the chuck
+//  grips the rod by sliding the rod in the chuck.
+//
+//  style = "three_piece": separate foot, a cradle that slides along the arm
+//  and 2 clamp caps (kept as a fallback if the ring fit is a problem).
+//
 //  Because the motor and the gearbox are both referenced to the arm, they
-//  line up by construction. The cradle can slide along the arm before the
-//  screws go in, to set how deep the chuck grips the rod.
+//  line up by construction.
 //  The arm's near face is arm_y0 = chuck_d/2 + chuck_clr (31.5 mm) from the
 //  rod axis, so the spinning chuck clears it everywhere (see common.scad).
 //
 //  Parameters shared with the gearbox (angle, arm, chuck, cheeks, wood
 //  screws) are in common.scad. No other libraries.
 //
-//  Hardware
+//  Hardware (one_piece)
+//   - 2x M4x20 socket head screw + 2x M4 hex nut (ring pinch bolts)
+//   - 8x 4 mm countersunk wood screw, ~20 mm (4 per cheek, into the arm)
+//   - 4x 4 mm countersunk wood screw, ~16-20 mm (plate -> board)
+//  Hardware (three_piece)
 //   - 4x M4x20 socket head screw + 4x M4 hex nut (motor clamps)
 //   - 8x 4 mm countersunk wood screw, ~20 mm (2 per cheek: cradle + foot)
 //   - 4x 4 mm countersunk wood screw, ~16-20 mm (foot -> board)
@@ -29,6 +41,10 @@
 //  flat on the foot plate; the far (upper) face is the longer one.
 //
 //  Printing: PETG/ASA/nylon (not PLA – it sits next to the stove).
+//   - one_piece (part = "mount"): plate down, supports from the build plate
+//     only (under the rear end of the ring, the lip and the ears).
+//     ~76 x 166 x 113 mm. Print a test ring first if unsure of hole sizing
+//     (ring_clr).
 //   - cradle: standing on its rear end face (as exported), no supports
 //   - clamps: on their ring face, no supports
 //   - foot: plate down, no supports
@@ -37,7 +53,11 @@
 include <common.scad>
 
 /* [What to show / export] */
-part = "assembly"; // [assembly, cradle, clamp, clamps_x2, foot, print_all]
+// one_piece = foot + arm cheeks + split motor ring in ONE print (default);
+// three_piece = separate foot, sliding cradle and 2 clamp caps
+style = "one_piece"; // [one_piece, three_piece]
+// mount = the one-piece part; cradle/clamp/foot = three-piece parts
+part = "assembly"; // [assembly, mount, cradle, clamp, clamps_x2, foot, print_all]
 
 /* [Motor] */
 motor_d    = 38;     // measured body diameter
@@ -65,6 +85,20 @@ head_d     = 8;      // counterbore for M4 socket head
 nut_w      = 7.2;    // M4 nut across flats + clearance
 nut_h      = 3.4;
 nut_depth  = 7;      // nut slot depth above the cradle face
+
+/* [One-piece: split ring (pinch clamp) around the motor] */
+ring_clr    = 0.4;   // diametral clearance of the ring bore (tune to your printer)
+ring_t      = 5;     // ring wall
+ring_len    = 54;    // along the motor axis, from the motor rear face
+slit_w      = 3;     // pinch slit at the bottom (closing it by 3 mm squeezes Ø by ~1 mm)
+lip_w       = 2.5;   // rear lip: stops the motor sliding back (0 = no lip)
+lip_t       = 2.5;
+ear_hw      = 11;    // pinch ears: half width (across, bolt direction)
+ear_drop    = 12;    // how far the ears reach below the bore
+pinch_z     = [0.25, 0.75];  // pinch bolt positions as fractions of ring_len
+pinch_cb    = 4;     // head counterbore depth (+x ear)
+pinch_nut_d = 4;     // nut trap depth (-x ear)
+plate_hw1   = 38;    // one-piece plate half width (board screws clear of the ring)
 
 /* [Foot (arm end on the board)] */
 foot_len    = 50;    // how far the cheeks run up the arm (on its near face)
@@ -106,7 +140,12 @@ function arm2world(p) = let(q = [p[0], p[1] - arm_y0, p[2]])
 
 // lowest motor_z so that nothing below the arm comes closer than board_clear
 // to the board. Candidates (y, z offset from the motor rear face):
-low_pts = [
+Rr = (motor_d + ring_clr)/2;     // one-piece ring bore radius
+low_pts = style == "one_piece" ? [
+    [-R,                -rear_clear],                // terminals / wires
+    [-(Rr + ring_t),    -lip_t],                     // ring + lip, rear bottom edge
+    [-(Rr + ear_drop),  -lip_t]                      // pinch ears, rear bottom edge
+] : [
     [-R,              -rear_clear],                 // terminals / wires
     [-R,               0],                          // rear edge of the motor body
     [-(R + clamp_t),   clamp_z[0] - clamp_w/2],     // rear clamp ring
@@ -114,7 +153,8 @@ low_pts = [
 ];
 function z_for(p) = (board_clear - base_t - (p[0] - arm_y0)*sa)/ca - p[1];
 motor_z = motor_z_set > 0 ? motor_z_set
-        : max(max([for (p = low_pts) z_for(p)]), foot_len + 2);
+        : style == "one_piece" ? max([for (p = low_pts) z_for(p)])
+        : max(max([for (p = low_pts) z_for(p)]), foot_len + 2);  // cradle must clear the foot cheeks
 
 // ---------------------------------------------------------------------
 // Cradle (arm frame, motor rear face at z = 0)
@@ -222,6 +262,70 @@ module foot() {
 }
 
 // ---------------------------------------------------------------------
+// One piece: foot plate + continuous arm cheeks + split ring (world frame)
+// ---------------------------------------------------------------------
+op_top   = motor_z + ring_len;                 // cheeks end with the ring (arm frame z)
+pinch_y  = -(Rr + (ear_drop - lip_w)/2 + 1);   // pinch bolt axis, below the bore
+
+module ring_2d() {
+    union() {
+        // ring + web up to the arm seat, narrowing to the cheek width
+        hull() {
+            circle(r = Rr + ring_t);
+            translate([-cw, 0]) square([2*cw, arm_y0]);
+        }
+        // cheeks along both sides of the arm
+        for (sx = [-1, 1])
+            translate([sx > 0 ? cheek_x : -cw, arm_y0 - eps]) square([cheek_t, arm_t + arm_clr/2 + eps]);
+        // pinch ears under the slit
+        translate([-ear_hw, -(Rr + ear_drop)]) square([2*ear_hw, ear_drop + 2]);
+    }
+}
+
+module one_piece() {
+    difference() {
+        union() {
+            translate([-plate_hw1, plate_y0, 0]) rounded_box([2*plate_hw1, plate_y1 - plate_y0, base_t], 5);
+            intersection() {
+                ARM() {
+                    // cheeks from below the plate up to the motor
+                    for (sx = [-1, 1])
+                        translate([sx > 0 ? cheek_x : -cw, arm_y0, -2*arm_t])
+                            cube([cheek_t, arm_t + arm_clr/2, 2*arm_t + op_top]);
+                    // ring + web, incl. the rear lip
+                    translate([0, 0, motor_z - lip_t]) linear_extrude(ring_len + lip_t) ring_2d();
+                }
+                translate([-150, -300, 0]) cube([300, 600, 400]);
+            }
+        }
+        ARM() translate([0, 0, motor_z]) {
+            // motor bore, open at the front; lip at the rear
+            cylinder(r = Rr, h = ring_len + 1);
+            translate([0, 0, -lip_t - 1]) cylinder(r = Rr - lip_w, h = lip_t + 2);
+            // pinch slit through the bottom wall, the ears and the lip
+            translate([-slit_w/2, -(Rr + ear_drop + 1), -lip_t - 1]) cube([slit_w, ear_drop + lip_w + 2, ring_len + lip_t + 2]);
+            // pinch bolts across the slit: head counterbore on +x, nut trap on -x
+            for (f = pinch_z) translate([0, pinch_y, ring_len*f]) {
+                rotate([0, 90, 0]) cylinder(d = bolt_d, h = 2*ear_hw + 2, center = true, $fn = 24);
+                translate([ear_hw - pinch_cb, 0, 0]) rotate([0, 90, 0]) cylinder(d = head_d, h = pinch_cb + 1, $fn = 32);
+                translate([-ear_hw - 1, 0, 0]) rotate([0, 90, 0]) rotate([0, 0, 30])
+                    cylinder(d = nut_w/cos(30), h = pinch_nut_d + 1, $fn = 6);
+            }
+        }
+        // wood screws into the arm: the shared pattern on each half of the cheeks
+        ARM() for (sx = [-1, 1], seg = [0, 1], p = arm_screw_yz(sx, arm_y0, seg*op_top/2, op_top/2))
+            arm_screw_cut(sx, p[0], p[1]);
+        // countersunk board screws, 2 at each end of the plate, outside the ring
+        for (y = [plate_y0 + plate_extra/2, plate_y1 - plate_extra/2], sx = [-1, 1])
+            translate([sx*(plate_hw1 - 7), y, 0]) {
+                translate([0, 0, -1]) cylinder(d = board_screw_d, h = base_t + 2, $fn = 24);
+                translate([0, 0, base_t - (board_head_d - board_screw_d)/2 + eps])
+                    cylinder(d1 = board_screw_d, d2 = board_head_d + 0.5, h = (board_head_d - board_screw_d)/2, $fn = 32);
+            }
+    }
+}
+
+// ---------------------------------------------------------------------
 // Ghosts for the assembly view (arm frame)
 // ---------------------------------------------------------------------
 module motor_ghost() {
@@ -246,19 +350,25 @@ module board_ghost() {
 // Output
 // ---------------------------------------------------------------------
 if (part == "assembly") {
-    color("lightsteelblue") foot();
-    ARM() translate([0, 0, motor_z]) {
-        color("lightsteelblue") cradle();
-        for (z = clamp_z) color("tomato") translate([0, 0, z - clamp_w/2]) clamp();
-        motor_ghost();
+    if (style == "one_piece") {
+        color("lightsteelblue") one_piece();
+    } else {
+        color("lightsteelblue") foot();
+        ARM() translate([0, 0, motor_z]) {
+            color("lightsteelblue") cradle();
+            for (z = clamp_z) color("tomato") translate([0, 0, z - clamp_w/2]) clamp();
+        }
     }
+    ARM() translate([0, 0, motor_z]) motor_ghost();
     arm_ghost();
     board_ghost();
 }
+else if (part == "mount")     one_piece();
 else if (part == "cradle")    cradle();
 else if (part == "clamp")     clamp();
 else if (part == "clamps_x2") { clamp(); translate([0, -(R + clamp_t + 10), 0]) clamp(); }
 else if (part == "foot")      foot();
+else if (part == "print_all" && style == "one_piece") one_piece();
 else if (part == "print_all") {
     foot();
     translate([plate_hw + hw + 15, 0, 0]) cradle();
@@ -277,4 +387,4 @@ echo(str("Chuck clearance to the arm: ", arm_y0 - chuck_d/2, " mm"));
 echo(str("Motor rear face at ", motor_z, " mm along the arm (near face, from the foot plate); lowest point ",
          low_world, " mm above the board"));
 echo(str("Chuck front at ", chuck_end, " mm along the arm"));
-echo(str("Foot plate ", 2*plate_hw, " x ", plate_y1 - plate_y0, " mm"));
+echo(str("Foot plate ", 2*(style == "one_piece" ? plate_hw1 : plate_hw), " x ", plate_y1 - plate_y0, " mm (", style, ")"));

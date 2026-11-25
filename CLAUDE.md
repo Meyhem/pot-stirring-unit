@@ -16,9 +16,10 @@ the stirring shaft sits above the food.
    foot holds its bottom end on the board at 60°; the motor cradle and the gearbox
    both grip it with cheeks + wood screws → motor and gearbox aligned by construction.
    Not a printed part (plain wood), shown as a ghost in the assemblies.
-5. **Motor mount (bottom, beside the pot)** – `motor_mount.scad`. Cradle hanging under
-   the arm + 2 clamp caps for the TOPOWER 550-18V motor (RS-550, Ø38 mm body), plus
-   the arm foot. A **drill chuck** (Ø55 at its thickest, length unmeasured – model
+5. **Motor mount (bottom, beside the pot)** – `motor_mount.scad`. Default = ONE print
+   (user's choice): foot plate + arm cheeks + split ring around the TOPOWER 550-18V
+   motor (RS-550, Ø38 mm body). Three-piece variant (foot, sliding cradle, 2 clamp
+   caps) kept via `style="three_piece"`. A **drill chuck** (Ø55 at its thickest, length unmeasured – model
    assumes 90) on the motor shaft grips the 6 mm input rod directly (no coupler).
 
 ## Files
@@ -26,9 +27,11 @@ the stirring shaft sits above the food.
   `arm_y0`, cheek thickness, wood screw pattern + `arm_screw_cut()`. Plain OpenSCAD.
   Change arm/chuck/angle ONLY here, then re-export both models.
 - `angled_gearbox.scad` – parametric gearbox (current version: v4). Needs BOSL2 + common.scad.
-- `motor_mount.scad` – motor cradle on the arm, clamps, arm foot. Plain OpenSCAD + common.scad.
+- `motor_mount.scad` – one-piece motor mount (default) or three-piece variant.
+  Plain OpenSCAD + common.scad.
 - `stl/` – exported parts at default parameters: gearbox (housing_a/b, gear_in/out,
-  spacer) and motor mount (motor_cradle, motor_clamp ×2 to print, arm_foot).
+  spacer) and motor mount (motor_mount_one_piece; three-piece variant: motor_cradle,
+  motor_clamp ×2 to print, arm_foot).
   OpenSCAD re-exports can reorder triangles without changing geometry – don't commit
   an STL whose sorted vertices are unchanged.
 - `stirrer.3mf` – old slicer project (2026-11-20), predates the arm/motor redesign.
@@ -87,16 +90,28 @@ the stirring shaft sits above the food.
 - Modelled in the arm frame (common.scad): z = rod/motor axis up towards the gearbox,
   y = from the rod towards the arm, x across. `ARM()` maps it to the world (board top
   = z 0, arm near face meets the foot plate at the origin).
-- Cradle: extruded profile, motor bore R, full width at the split line (M4 clamp
+- **one_piece** (`part="mount"`, default): plate (half width `plate_hw1` 38, so the
+  front board screws are clear of the ring for a vertical screwdriver) + cheeks
+  running continuously from the plate to the ring's front end (4 wood screws per
+  side = shared pattern applied to each half) + `ring_2d` profile: ring (`ring_t` 5,
+  bore Ø38.4 via `ring_clr`) hulled up to the arm seat, pinch ears below. 3 mm slit
+  at the bottom through wall, ears and rear lip (`lip_w` 2.5 – terminals pass inside
+  it). 2 M4 pinch bolts along x (counterbore +x, nut trap −x). Motor goes in from the
+  front, rear first. Prints plate down, supports under the ring rear. ~76×166×113.
+  Fit checks (all EMPTY): part ∩ motor cylinder Ø38, part ∩ chuck Ø55, part ∩ arm
+  (shrunk 0.01 – exact face contact at the seat otherwise reports a degenerate solid).
+  Hard-code motor_z in check files – variables of a `use`d file are not visible.
+- three_piece: Cradle: extruded profile, motor bore R, full width at the split line (M4 clamp
   bolts + side nut slots), narrowing to the arm seat at `arm_y0`, two cheeks up the
   arm sides with the shared screw pattern. 2 half-ring clamp caps under the motor,
   1.5 mm squeeze gap. Prints standing on its rear end face.
 - Foot: plate (4 countersunk board screws) + two parallelogram cheeks = the arm's
   side silhouette up to `foot_len` 50. Arm end cut 30° off square, rests on the plate.
 - `motor_z` (rear face position along the arm) is auto: lowest spot that keeps
-  terminals/clamps `board_clear` (10) above the board and clear of the foot cheeks
-  → currently 52 mm, lowest point 15 mm. Override with `motor_z_set`.
-- `part`: assembly, cradle, clamp, clamps_x2, foot, print_all. Echo reports chuck
+  terminals/ring/ears `board_clear` (10) above the board (three_piece: also clear of
+  the foot cheeks) → one_piece 45.9 mm (terminals are the limit), three_piece 52.
+  Override with `motor_z_set`.
+- `part`: assembly, mount, cradle, clamp, clamps_x2, foot, print_all (follows `style`). Echo reports chuck
   clearance, motor height above the board and where the chuck ends.
 
 ## Rendering / checks (run after every geometry change)

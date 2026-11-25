@@ -63,30 +63,40 @@ pattern) live in `common.scad`.
 
 ## Motor mount – `motor_mount.scad`
 
-| Side view | Print parts |
+| Side view | The printed part |
 |---|---|
-| ![motor mount](img/motor_mount.png) | ![motor mount parts](img/motor_mount_print_parts.png) |
+| ![motor mount](img/motor_mount.png) | ![motor mount part](img/motor_mount_print_parts.png) |
 
 <img src="img/motor_mount_3d.png" width="500" alt="motor mount 3D view">
 
-- **Cradle:** grips the arm with two cheeks (2 wood screws each, staggered, like the
-  gearbox) and holds the motor underneath it with two clamp caps (4× M4, the nuts
-  slide in from the side). Before you drive the screws, slide it along the arm to set
-  how deep the chuck grips the rod.
-- **Foot:** a plate screwed to the board (4 wood screws), with two cheeks holding the
-  arm's bottom end at 60°. Cut the arm's end 30° off square so it sits flat on the plate.
-- In the lowest cradle position, the motor terminals and clamps stay 15 mm above the board.
+**One printed part** (`part="mount"`, about 76 × 166 × 113 mm):
+- **Plate:** screws to the board (4 wood screws). The arm's bottom end sits on it at 60°.
+  Cut the arm's end 30° off square so it sits flat.
+- **Cheeks:** one along each side of the arm, 4 wood screws per side (staggered).
+- **Motor ring:** under the arm, on the gearbox input axis. It has a slit at the bottom
+  that two M4 bolts pinch shut, and a small lip at the back that stops the motor
+  sliding backwards.
+- **Assembly:** push the motor into the ring from the front, rear end first; the
+  chuck stays in front. Tighten the two pinch bolts. Set how deep the chuck grips the
+  rod by sliding the rod in the chuck.
+- **Clearance:** the motor terminals stay 10 mm above the board.
 
-**Hardware:** 4× M4×20 socket head + 4× M4 nut, 8× 4 mm countersunk wood screw
-(~20 mm, cheeks), 4× 4 mm countersunk wood screw (foot → board), optional 1 mm
-rubber strip in the cradle.
+**Hardware:** 2× M4×20 socket head + 2× M4 nut, 8× 4 mm countersunk wood screw
+(~20 mm, cheeks), 4× 4 mm countersunk wood screw (plate → board).
+
+A three-part version (separate foot, a cradle that slides along the arm, and 2 clamp
+caps) is still available with `style="three_piece"`. Its STLs are `arm_foot`,
+`motor_cradle` and `motor_clamp`.
 
 ## Printing
 
 - **PETG / ASA / nylon only.** Not PLA: it is too close to heat and steam.
 - Housing halves: split face down, supports touching the build plate only.
 - Gears: flat back down, no supports, 4+ perimeters, 40%+ infill.
-- Motor cradle: standing on its rear end face, no supports. Clamps on their ring
+- Motor mount (one piece): plate down, supports from the build plate only (under the
+  back of the motor ring). If you're not sure how your printer sizes holes, print a
+  short test ring first: tune `ring_clr` so the motor slides in easily.
+- Three-piece variant: cradle standing on its rear end face, clamps on their ring
   face, foot plate down, no supports.
 - Run the gears dry, with no grease, because they are above the food.
 - All STLs are in [`stl/`](stl/). `stirrer.3mf` is an older slicer project; re-slice from `stl/`.
@@ -99,7 +109,7 @@ Requires [OpenSCAD](https://openscad.org) and [BOSL2](https://github.com/BelfryS
 ```bash
 # export one part (see `part` at the top of each .scad for the options)
 openscad -o stl/housing_a.stl -D 'part="housing_a"' angled_gearbox.scad
-openscad -o stl/motor_cradle.stl -D 'part="cradle"' motor_mount.scad
+openscad -o stl/motor_mount_one_piece.stl -D 'part="mount"' motor_mount.scad
 # regenerate all images in this README (needs xvfb-run when run headless)
 ./render_images.sh
 ```
@@ -109,7 +119,8 @@ openscad -o stl/motor_cradle.stl -D 'part="cradle"' motor_mount.scad
 - [x] Gearbox v4: includes fixes from earlier test prints (looser bearing pockets, axial stops)
 - [x] Arm 20×40 on edge, gripped by cheeks (gearbox, motor cradle, foot)
 - [x] Motor mount on the arm, with clearance for the drill chuck
-- [ ] Print and test gearbox v4 and the motor mount
+- [x] One-piece motor mount (foot + cheeks + split motor ring)
+- [ ] Print and test gearbox v4 and the motor mount (check the ring fit first)
 - [ ] Measure the real chuck length (the model assumes 90 mm)
 - [ ] Wooden paddle
 - [ ] Full-unit assembly model (gearbox + arm + motor mount)
