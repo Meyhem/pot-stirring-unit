@@ -12,15 +12,19 @@ the stirring shaft sits above the food.
    to the gearbox.
 4. **Holding arm = spine** – wooden 20×40 mm arm standing on edge (40 mm in the shaft
    plane = the plane gravity bends it in), parallel to the input rod. Its near face is
-   `arm_y0` = 31.5 mm from the rod axis (Ø55 drill chuck radius + 4 mm). A printed
+   `arm_y0` = 31.5 mm from the rod axis (Ø55 drill head radius + 4 mm). A printed
    foot holds its bottom end on the board at 60°; the motor cradle and the gearbox
    both grip it with cheeks + wood screws → motor and gearbox aligned by construction.
    Not a printed part (plain wood), shown as a ghost in the assemblies.
 5. **Motor mount (bottom, beside the pot)** – `motor_mount.scad`. Default = ONE print
    (user's choice): foot plate + arm cheeks + split ring around the TOPOWER 550-18V
    motor (RS-550, Ø38 mm body). Three-piece variant (foot, sliding cradle, 2 clamp
-   caps) kept via `style="three_piece"`. A **drill chuck** (Ø55 at its thickest, length unmeasured – model
-   assumes 90) on the motor shaft grips the 6 mm input rod directly (no coupler).
+   caps) kept via `style="three_piece"`. In front of the can sits a **drill head**
+   (from a cordless drill): beige planetary gearbox ~Ø44×40 with screw ribs, clutch
+   collar Ø55×20 (thickest = `chuck_d`), keyless chuck ~Ø44×43 – lengths estimated
+   from a photo, not measured (`head_*` params). The chuck grips the 6 mm input rod
+   directly (no coupler). RS-550 vent slots are near the REAR end (~8–13 mm from
+   the rear face) – keep them uncovered.
 
 ## Files
 - `common.scad` – parameters shared by both models: `shaft_angle`, chuck, arm size +
@@ -95,10 +99,14 @@ the stirring shaft sits above the food.
   running continuously from the plate to the ring's front end (4 wood screws per
   side = shared pattern applied to each half) + `ring_2d` profile: ring (`ring_t` 5,
   bore Ø38.4 via `ring_clr`) hulled up to the arm seat, pinch ears below. 3 mm slit
-  at the bottom through wall, ears and rear lip (`lip_w` 2.5 – terminals pass inside
-  it). 2 M4 pinch bolts along x (counterbore +x, nut trap −x). Motor goes in from the
-  front, rear first. Prints plate down, supports under the ring rear. ~76×166×113.
-  Fit checks (all EMPTY): part ∩ motor cylinder Ø38, part ∩ chuck Ø55, part ∩ arm
+  at the bottom through wall and ears. The ring covers only the FRONT of the can
+  (`ring_z0` 18 → 57, user's request: rear vents + end cap stay open for cooling).
+  No rear lip (`lip_w` 0, optional): the drill gearbox housing (wider than the bore)
+  sits against the ring's front face = the motor's axial stop. 2 M4 pinch bolts
+  along x (counterbore +x, nut trap −x). Motor goes in from the front, rear first.
+  Prints plate down, supports under the ring rear. ~76×166×113.
+  Fit checks (all EMPTY): part ∩ motor cylinder Ø38, part ∩ drill head (Ø44 gearbox
+  from z 57.01 + Ø55 collar), part ∩ arm
   (shrunk 0.01 – exact face contact at the seat otherwise reports a degenerate solid).
   Hard-code motor_z in check files – variables of a `use`d file are not visible.
 - three_piece: Cradle: extruded profile, motor bore R, full width at the split line (M4 clamp
@@ -129,7 +137,7 @@ Verification done so far with temporary `part` values (intersection must be EMPT
 Check exported STLs report `Simple: yes`. Look at the preview PNG after changes.
 These check files work from a scratch dir with `use </abs/path/angled_gearbox.scad>`.
 Motor mount: check the echo (chuck clearance ≥ 4, lowest point ≥ board_clear) and
-a side view (`--camera=0,-40,90,90,0,90,600`).
+a side view (`--camera=0,-50,100,90,0,90,650`).
 
 ## Constraints / preferences
 - Materials: PETG / ASA / nylon, never PLA (heat + steam). Gears run dry, no grease (above food).
@@ -137,8 +145,9 @@ a side view (`--camera=0,-40,90,90,0,90,600`).
 - Keep everything parametric; keep the BOM + assembly notes at the top of each .scad in sync.
 
 ## Open items
-- Measure the real drill chuck length (`chuck_len`, assumed 90) – only affects the
-  ghost and the echoed chuck end, not printed parts.
+- Measure the drill head (`head_*` in motor_mount.scad, estimated from a photo) –
+  only affects the ghost, not printed parts. Confirm the gearbox housing is wider
+  than Ø38.4 all round (it is the motor's axial stop).
 - Rigid chuck + 2 bearings in the gearbox: relies on cradle/gearbox alignment on
   the arm; if it binds, a flexible coupler between chuck and rod is the fallback.
 - Board stability: the gearbox leans out over the pot – board must be weighted/clamped.
