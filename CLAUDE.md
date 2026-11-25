@@ -34,8 +34,8 @@ the stirring shaft sits above the food.
 - `motor_mount.scad` – one-piece motor mount (default) or three-piece variant.
   Plain OpenSCAD + common.scad.
 - `stl/` – exported parts at default parameters: gearbox (housing_a/b, gear_in/out,
-  spacer) and motor mount (motor_mount_one_piece; three-piece variant: motor_cradle,
-  motor_clamp ×2 to print, arm_foot).
+  spacer) and motor_mount_one_piece. Three-piece STLs were removed as obsolete
+  (user's call 2026-11-25); export them on demand with `-D 'style="three_piece"'`.
   OpenSCAD re-exports can reorder triangles without changing geometry – don't commit
   an STL whose sorted vertices are unchanged.
 - `stirrer.3mf` – old slicer project (2026-11-20), predates the arm/motor redesign.

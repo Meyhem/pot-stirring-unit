@@ -87,8 +87,8 @@ pattern) live in `common.scad`.
 (~20 mm, cheeks), 4× 4 mm countersunk wood screw (plate → board).
 
 A three-part version (separate foot, a cradle that slides along the arm, and 2 clamp
-caps) is still available with `style="three_piece"`. Its STLs are `arm_foot`,
-`motor_cradle` and `motor_clamp`.
+caps) is still in the source as `style="three_piece"`. It has no ready-made STLs; export
+them with `-D 'style="three_piece"' -D 'part="cradle"'` (or `clamp`, `foot`).
 
 ## Printing
 
