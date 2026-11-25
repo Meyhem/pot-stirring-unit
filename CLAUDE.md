@@ -169,5 +169,10 @@ modules inside the model, not in the check file.
   the arm; if it binds, a flexible coupler between chuck and rod is the fallback.
 - Board stability: the gearbox leans out over the pot – board must be weighted/clamped.
 - Paddle design (wooden, maybe scraping the bottom).
+- Adjustable arm length – parked by the user (2026-11-25). Options if it comes back:
+  A) gearbox cheeks longer + slotted, M5 through-bolts + wing nuts in holes drilled
+  in the arm, no end-stop cap (~60 mm range, housing changes); B) two-piece arm +
+  printed splice coupler, fixed screws in the lower piece, slots for the upper
+  (100–150 mm range, housing unchanged). Rod just slides in the chuck either way.
 - No combined model of the full unit (gearbox + arm + motor mount) yet – both use
   the same arm frame now, so it mostly needs an arm length / pot height parameter.

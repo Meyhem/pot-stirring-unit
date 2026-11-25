@@ -151,4 +151,5 @@ A single part by hand: `openscad -o x.stl -D 'part="housing_a"' angled_gearbox.s
 - [ ] Print and test gearbox v4 and the motor mount (check the ring fit first)
 - [ ] Measure the drill head (gearbox / collar / chuck lengths are estimated from a photo)
 - [ ] Wooden paddle
+- [ ] Adjustable arm length (parked for now)
 - [ ] Full-unit assembly model (gearbox + arm + motor mount)
