@@ -7,6 +7,7 @@
 //  shafts, so gears + bearings drop into one half and the other half
 //  clamps them.  Halves are joined with M3 bolts through a flange.
 //
+//  Shared parameters: common.scad (same folder).
 //  Requires BOSL2  ->  https://github.com/BelfrySCAD/BOSL2
 //  (clone it into your OpenSCAD libraries folder)
 //
@@ -16,9 +17,10 @@
 //   - 2x M3 grub screw + 2x M3 nut (gear set screws)
 //   - 6x M3x12 bolt + nut (housing halves)
 //   - 4x 4 mm countersunk wood screw, ~20 mm (2 per cheek, staggered) -> wooden arm
-//     20x40, standing on edge (40 mm side in the shaft plane)
+//     20x40, standing on edge (40 mm side in the shaft plane), near face 31.5 mm
+//     from the input axis so the Ø55 drill chuck on the motor clears it
 //   - 2x 6 mm shaft collar (stop shafts sliding back out)
-//   - flexible coupler (6 mm on the stub side) between motor/drill chuck and input stub
+//   - input rod: 6 mm steel, gripped directly by the drill chuck on the motor
 //
 //  Printing: PETG / ASA / nylon, NOT PLA.  Housing halves split face down,
 //  "supports on build plate only" (gear cavity roof + under the arm cheeks).
@@ -33,6 +35,7 @@
 
 include <BOSL2/std.scad>
 include <BOSL2/gears.scad>
+include <common.scad>   // shaft_angle, arm, chuck, cheek + wood screw params
 
 /* [What to show / export] */
 // assembly = preview; others are print-ready, laid flat
@@ -41,7 +44,7 @@ part = "assembly"; // [assembly, housing_a, housing_b, gear_out, gear_in, spacer
 show_cutaway = true;
 
 /* [Gears] */
-shaft_angle = 30;     // angle between input and output shafts (input tilt from vertical)
+// shaft_angle (input tilt from vertical, 30) lives in common.scad
 gear_mod    = 2;      // module – 2 is a good size for PETG/ASA/nylon
 pinion_teeth = 15;    // input gear (on motor rod)
 gear_teeth   = 29;    // output gear (stirrer shaft)  -> ratio 29/15 ≈ 1.93:1
@@ -77,19 +80,11 @@ nut_h      = 2.6;
 // screws go sideways through the cheeks into the arm. A cap at the top
 // is the end stop, so the weight sits on the arm end, not on the screws.
 // The arm is not boxed in: its near and far faces stay open.
+// Arm size, its distance from the rod (arm_y0, set by the drill chuck), cheek
+// thickness and the wood screw pattern are shared -> common.scad.
 mount       = true;
-arm_w       = 20;     // arm width  (across, perpendicular to the shaft plane)
-arm_t       = 40;     // arm depth  (in the shaft plane = bending direction)
-arm_clr     = 0.6;    // play around the wood
-arm_gap     = 4;      // air between input bearing tube and the arm
 socket_len  = 40;     // how far the cheeks run down the arm
-cheek_t     = 6;      // cheek thickness
 cap_t       = 4;      // end stop above the arm
-screw_d     = 4.5;    // 4 mm wood screw clearance
-screw_head_d = 8.5;   // countersink diameter
-// screw positions per cheek as fractions [across arm_t, along socket_len];
-// side B uses the mirrored pattern, so screws from the two sides never meet
-screw_pat   = [[0.25, 0.25], [0.75, 0.75]];
 
 /* [Set screw (M3 grub screw + nut trap in each gear)] */
 set_d = 3.2;
@@ -241,17 +236,14 @@ module flange() {
 side_dir = [0, cos(shaft_angle), sin(shaft_angle)];   // in-plane, away from the pot
 
 // arm mount, in the input-shaft frame (local z = input axis, local +y = away from pot)
-arm_y0   = tube_r + arm_gap;                 // arm face nearest to the rod
+// arm_y0 (rod axis -> arm near face) comes from common.scad
+assert(arm_y0 >= tube_r + 2, "arm would hit the input bearing tube");
 arm_y1   = arm_y0 + arm_t;                   // arm face away from the rod
 sock_top = -gear_back - 1 - wall;            // flush with the bottom of the gear body
 sock_bot = sock_top - socket_len;
 arm_top  = sock_top - cap_t;                 // arm end rests here (end stop)
-cheek_x  = arm_w/2 + arm_clr/2;              // inner face of each cheek
 cheek_y1 = arm_y1 + arm_clr/2;               // cheeks end flush with the far arm face
 
-// screw (y, z) positions for side sx (+1 = half A, -1 = half B)
-function screw_yz(sx) = [for (p = screw_pat)
-    [arm_y0 + arm_t*(sx > 0 ? p[0] : 1 - p[0]), sock_bot + socket_len*p[1]]];
 
 module mount_solid() {
     if (mount) in_frame() {
@@ -271,13 +263,8 @@ module mount_holes() {
         translate([0, arm_y0 - arm_clr/2, sock_bot - 1])
             cuboid([arm_w + arm_clr, arm_t + arm_clr + 20, arm_top - sock_bot + 1], anchor=FRONT+BOT);
         // wood screws through the cheeks, countersunk on the outside
-        for (sx = [-1, 1], p = screw_yz(sx))
-            translate([sx*cheek_x, p[0], p[1]]) {
-                xcyl(d=screw_d, l=2*cheek_t + 2, $fn=24);
-                translate([sx*cheek_t, 0, 0])
-                    yrot(sx > 0 ? 90 : -90) cyl(d1=screw_d, d2=screw_head_d + 0.5,
-                         h=(screw_head_d - screw_d)/2 + 0.25, anchor=TOP, $fn=32);
-            }
+        for (sx = [-1, 1], p = arm_screw_yz(sx, arm_y0, sock_bot, socket_len))
+            arm_screw_cut(sx, p[0], p[1]);
     }
 }
 module arm_ghost() {

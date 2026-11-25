@@ -15,10 +15,12 @@ R=(xvfb-run -a openscad --imgsize=1200,900 --colorscheme=Tomorrow)
 "${R[@]}" --render -o img/gearbox_print_parts.png --camera=0,0,0,30,0,0,620 \
     -D 'part="print_all"' angled_gearbox.scad
 
-# Motor mount
-"${R[@]}" -o img/motor_mount.png --autocenter --viewall --camera=0,0,0,65,0,210,0 \
-    -D 'part="assembly"' motor_mount_45.scad
-"${R[@]}" --render -o img/motor_mount_print_parts.png --autocenter --viewall --camera=0,0,0,45,0,30,0 \
-    -D 'part="print_all"' motor_mount_45.scad
+# Motor mount (cradle on the arm + arm foot)
+"${R[@]}" -o img/motor_mount.png --camera=0,-40,90,90,0,90,600 \
+    -D 'part="assembly"' motor_mount.scad
+"${R[@]}" -o img/motor_mount_3d.png --camera=0,-20,60,60,0,250,520 \
+    -D 'part="assembly"' motor_mount.scad
+"${R[@]}" --render -o img/motor_mount_print_parts.png --autocenter --viewall --camera=0,0,0,50,0,30,0 \
+    -D 'part="print_all"' motor_mount.scad
 
 echo "images updated in img/"
