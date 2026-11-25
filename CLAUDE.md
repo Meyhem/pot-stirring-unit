@@ -37,8 +37,10 @@ the stirring shaft sits above the food.
 - Render times are short: housing ~5 s, gears ~4 s.
 - Write scratch renders/STLs outside the project (or to a temp dir), only final
   exports go to `stl/`.
-- Git repo (branch `main`, no remote). STLs and the .3mf are tracked as deliverables;
-  scratch `preview.png` is ignored.
+- Git repo, branch `main`, remote `origin` = git@github.com:Meyhem/pot-stirring-unit.git.
+  STLs and the .3mf are tracked as deliverables; scratch `preview.png` is ignored.
+- **Auto-push:** after every iteration (each finished change: geometry edit + checks,
+  STL re-export, doc update) commit and `git push` to `origin main` without asking.
 
 ## Gearbox (angled_gearbox.scad) – current design
 - Straight bevel pair (BOSL2 `bevel_gear`, spiral=0), shaft angle 30° (input tilted
