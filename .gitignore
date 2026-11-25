@@ -1,0 +1,9 @@
+# scratch renders
+/preview.png
+*.tmp.stl
+# OpenSCAD backups / editor junk
+*.bak
+*~
+.~lock.*
+# local Claude settings
+.claude/settings.local.json
