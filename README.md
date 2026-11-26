@@ -96,7 +96,7 @@ them with `-D 'style="three_piece"' -D 'part="cradle"'` (or `clamp`, `foot`).
 |---|---|---|
 | `housing_a.stl`, `housing_b.stl` | 1 each | build plate only (gear cavity roof, under the arm cheeks) |
 | `gear_out.stl`, `gear_in.stl` | 1 each | none |
-| `spacer.stl` | **2** (one per gear) | none |
+| `spacer.stl` | **2** (one per gear; the output gear needs it, the input one is optional) | none |
 | `motor_mount_one_piece.stl` | 1 | build plate only (under the back of the motor ring) |
 
 All STLs are already in print orientation.

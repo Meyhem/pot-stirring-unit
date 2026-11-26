@@ -27,7 +27,10 @@
 //  Gears flat back down, no supports, 4+ perimeters, 40%+ infill.
 //
 //  Assembly: grub screw nut into the slot on the gear back -> gear on rod
-//  -> spacer (or M6 washers) -> bearings into half B -> close with half A -> bolts.
+//  -> spacer (Ø8.4, or a 6x8 shim washer – NOT an M6 washer, it would rub the
+//  bearing shield) -> bearings into half B -> close with half A -> bolts.
+//  The output gear needs the spacer (it carries the shaft + paddle); the input
+//  one is optional (the drill chuck holds the rod).
 //  Rods may go up into the gear's hub boss, but must end >=1 mm below its top.
 //  Each hub boss stops 0.3 mm short of a pad on the housing wall (axial stop).
 //  Run the gears dry (no grease) – they sit above the food.
@@ -62,6 +65,9 @@ brg_hclr  = 0.4;      // pocket height clearance (6 mm bearing -> 6.4 mm pocket)
 brg_gap   = 18;       // space between the two bearings on each shaft
 brg_ledge = 1.75;     // shoulder that holds the outer race (must not touch inner race)
 out_stub  = 0;        // extra tube length below lower output bearing
+// spacer under each gear: must press ONLY on the bearing's inner ring (turns with
+// the shaft), not on the shield/seal or outer ring – 626 inner ring is ~8.5 mm
+spacer_od = 8.4;
 
 /* [Housing] */
 wall       = 3;
@@ -170,9 +176,11 @@ module hub_boss(boss_top) {
     down(1) tube(od=boss_d, id=shaft_d + shaft_clr, h=boss_top + 1, anchor=BOT, $fn=48);
 }
 
-// spacer between gear back and inner race of the first bearing
+// spacer between gear back and inner race of the first bearing: fills the 3 mm
+// gap minus 0.3 mm play. On the output shaft it carries the shaft + paddle weight
+// into the bearing's inner ring; on the input it's optional (the chuck holds the rod).
 module spacer() {
-    tube(h=3 - 0.3, id=shaft_d+0.3, od=shaft_d+3.5, anchor=BOT, $fn=48);
+    tube(h=3 - 0.3, id=shaft_d+0.3, od=spacer_od, anchor=BOT, $fn=48);
 }
 
 // ---------------------------------------------------------------------

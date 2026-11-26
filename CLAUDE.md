@@ -90,7 +90,11 @@ the stirring shaft sits above the food.
 - Gears: flat back (cone_backing=false), M3 grub screw + M3 nut trap from the back,
   hub boss Ø12 on the front face. Housing has a Ø14 pad opposite each boss with
   `axial_gap` = 0.3 mm → gears cannot slide into the walls (real prints stalled without this).
-  A spacer (or M6 washers) between gear back and upper bearing stops the other direction.
+  A spacer (`spacer_od` 8.4 × 2.7, ID 6.3) between gear back and upper bearing stops
+  the other direction. It must press ONLY on the bearing inner ring (~8.5 mm on a
+  626; it turns with the shaft) – the old Ø9.5 / M6-washer version reached the
+  shield. Output gear needs it (carries shaft + paddle weight); input optional
+  (the drill chuck holds the rod axially).
 - Tooth tip height above pitch base = face_width·cos(pitch_angle) + 1 (NOT sin –
   that bug once left 0.15 mm wall clearance). Cavity = that + gear_clear (2.5).
 - Housing split in two halves in the plane of both shafts (x=0), joined by 6 M3
