@@ -4,6 +4,7 @@
 #   make check      mesh validity of all STLs + geometry fit checks
 #   make prune      delete STLs in stl/ that are not current parts
 #   make images     re-render the README images
+#   make circuit    simulate the motor power stage (ngspice) + draw its schematic
 #   make all-in     everything above, in order (what to run after each iteration)
 #   make rebuild    force re-export of every STL
 #
@@ -18,7 +19,7 @@ MOUNT_PARTS   := motor_mount_one_piece
 
 STLS := $(GEARBOX_PARTS:%=stl/%.stl) $(MOUNT_PARTS:%=stl/%.stl)
 
-.PHONY: stl check check-stl check-fit prune images all-in rebuild
+.PHONY: stl check check-stl check-fit prune images all-in rebuild circuit sim schematic
 .DEFAULT_GOAL := stl
 
 stl: $(STLS)
@@ -59,7 +60,27 @@ prune:
 images:
 	./render_images.sh
 
-all-in: stl prune check images
+# ---- electronics (electronics/): ngspice + a local venv from requirements.txt
+VENV := electronics/.venv
+STAMP := $(VENV)/.installed
+
+$(STAMP): electronics/requirements.txt
+	$(PYTHON) -m venv $(VENV)
+	$(VENV)/bin/pip install -q -r electronics/requirements.txt
+	@touch $(STAMP)
+
+sim: $(STAMP)
+	@command -v ngspice >/dev/null || { echo "ngspice not found (apt install ngspice)"; exit 1; }
+	@cd electronics && .venv/bin/python sim.py > /dev/null \
+		|| { cat sim_results.md; echo "circuit checks FAILED"; exit 1; }
+	@grep -c "PASS" electronics/sim_results.md | xargs printf "circuit checks: %s PASS\n"
+
+schematic: $(STAMP)
+	@cd electronics && .venv/bin/python schematic.py
+
+circuit: sim schematic
+
+all-in: stl prune check images circuit
 
 rebuild:
 	@touch common.scad

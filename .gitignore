@@ -10,3 +10,6 @@
 # build leftovers
 stl/*.log
 __pycache__/
+# electronics: local venv + raw simulation data
+electronics/.venv/
+electronics/out/

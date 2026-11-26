@@ -90,6 +90,45 @@ A three-part version (separate foot, a cradle that slides along the arm, and 2 c
 caps) is still in the source as `style="three_piece"`. It has no ready-made STLs; export
 them with `-D 'style="three_piece"' -D 'part="cradle"'` (or `clamp`, `foot`).
 
+## Electronics – motor power control (`electronics/`)
+
+The motor runs from a **19 V / 90 W laptop brick** (≈4.7 A). An Arduino Nano reads a
+**speed pot** and drives a low-side MOSFET with 20 kHz PWM. Current sensing gives stall
+detection and an over-current trip. The circuit is defined in code: `circuit.py`
+generates ngspice netlists and holds all the parameters, `sim.py` simulates and checks
+them, and `schematic.py` draws the schematic from the same values. The firmware isn't
+written yet.
+
+![Schematic](img/circuit_schematic.png)
+
+- **Power path:** brick → 5 A slow fuse → SMBJ22A TVS + 1000 µF bulk cap → motor → IRLZ44N
+  (logic level, 100 Ω gate, 10 k pull-down) → 20 mΩ shunt → ground. SB540 Schottky
+  flyback diode, 10 nF across the brushes (100 nF costs +0.2 W in the MOSFET at 20 kHz).
+- **Sensing:** shunt → RC → LM358 ×22.4 → **A1** (0.448 V/A of *supply* current; motor
+  current = that / duty). The second LM358 half compares it with a 1.91 V reference
+  → **D2** (INT0) goes high above **4.3 A**, below the brick's limit. Bus divider → **A2**
+  (bus ÷ 5.55: the brick sagging or unplugged). Pot → **A0**.
+- **Logic power:** a buck module (MP1584 / LM2596) makes 5 V from the bus for the
+  Nano's 5V pin and the LM358.
+
+What the simulation shows (`make circuit` → [`electronics/sim_results.md`](electronics/sim_results.md)):
+
+| | |
+|---|---|
+| Start without a ramp (pot 0 → 60 %) | 42 A motor / 25 A supply peak, so the brick would shut down. **The firmware needs a soft-start.** |
+| Soft-start ramp 0 → 99 % | 1 s peaks at 5.5 A (too much). **2.5 s → 4.05 A**, under the brick limit, comparator stays low |
+| Full speed, normal load | ~19 400 rpm motor, 3.1 A |
+| Paddle jams at 60 % | D2 trips 5.6 ms after the jam, before the brick limit (6.7 ms). Without a PWM cut the motor would draw 35 A |
+| 20 kHz switching at 60 % | MOSFET 0.39 W, diode 0.39 W (no heatsinks needed), drain peak 21 V, A1 ripple 2.7 LSB |
+
+![Start-up](img/circuit_sim_startup.png)
+![Stall](img/circuit_sim_stall.png)
+![Switching](img/circuit_sim_switching.png)
+
+The motor model is an RS-550 estimate (0.23 Ω, ke 0.0088 V·s/rad, 1.4 A no-load). The
+stirring load and jam torque are guesses. **Measure the motor's resistance and no-load
+current, then update `P` in `circuit.py`.**
+
 ## Printing
 
 | STL | Print | Supports |
@@ -124,7 +163,12 @@ make prune      # delete STLs in stl/ that are no longer current parts
 make images     # re-render the README images (needs xvfb-run when headless)
 make all-in     # all of the above
 make rebuild    # force a re-export of every STL
+make circuit    # simulate the motor power stage + draw its schematic
 ```
+
+The electronics part needs `ngspice` (`apt install ngspice`). `make circuit` creates
+`electronics/.venv` from `electronics/requirements.txt` the first time it runs. It
+fails if any circuit check fails.
 
 A single part by hand: `openscad -o x.stl -D 'part="housing_a"' angled_gearbox.scad`
 (see `part` at the top of each .scad for the options).
@@ -150,6 +194,9 @@ A single part by hand: `openscad -o x.stl -D 'part="housing_a"' angled_gearbox.s
 - [x] One-piece motor mount (foot + cheeks + split motor ring)
 - [ ] Print and test gearbox v4 and the motor mount (check the ring fit first)
 - [ ] Measure the drill head (gearbox / collar / chuck lengths are estimated from a photo)
+- [x] Motor power stage: circuit + ngspice simulation (start-up, stall, switching)
+- [ ] Measure motor R / no-load current; build and test the power stage
+- [ ] Arduino firmware: soft-start ramp, stall detection (A1), D2 trip, brick sag (A2)
 - [ ] Wooden paddle
 - [ ] Adjustable arm length (parked for now)
 - [ ] Full-unit assembly model (gearbox + arm + motor mount)

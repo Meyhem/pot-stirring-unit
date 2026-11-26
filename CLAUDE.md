@@ -46,6 +46,7 @@ the stirring shaft sits above the food.
 - `Makefile` – `make` (STLs), `check`, `prune`, `images`, `all-in`, `rebuild`.
 - `tools/` – `check_stl.py` (mesh validity, any STL), `check_fit.py` (OpenSCAD
   fit checks), `stl_same.py` (geometry-equal test used by the Makefile). Stdlib only.
+- `electronics/` – motor power control circuit (code-first, see below).
 - `prompt_regenerate_gearbox.md` – short spec (Slovak) to regenerate the gearbox from scratch.
 
 ## Local environment
@@ -143,6 +144,23 @@ the stirring shaft sits above the food.
   Override with `motor_z_set`.
 - `part`: assembly, mount, cradle, clamp, clamps_x2, foot, print_all (follows `style`). Echo reports chuck
   clearance, motor height above the board and where the chuck ends.
+
+## Electronics (electronics/) – power stage, circuit only (firmware not started)
+- 19 V / 90 W laptop brick (~4.7 A; it shuts down above that), Arduino Nano (assumed),
+  speed pot on A0 → PWM D9 20 kHz → IRLZ44N low-side, SB540 flyback, 20 mΩ shunt,
+  LM358: ×22.4 sense amp → A1 (supply current) + comparator → D2 (trip 4.3 A),
+  bus divider → A2, buck module 19→5 V. Part choices are assumptions: the user
+  hasn't given a parts list yet – swap models/values when they do.
+- `circuit.py` = all parameters (`P`) + netlist generator. Two model levels: `avg`
+  (duty-averaged switch, seconds: start-up/stall) and `switch` (real PWM, ms: edges,
+  losses). `sim.py` runs ngspice (batch, `wrdata`), checks → `sim_results.md` +
+  `img/circuit_sim_*.png`, exit 1 on FAIL. `schematic.py` (schemdraw) draws
+  `img/circuit_schematic.png` from `P` – update it when the topology changes.
+- `make circuit` (part of `all-in`); ngspice from apt, venv `electronics/.venv`
+  (gitignored, built from requirements.txt). Raw data in `electronics/out/` (ignored).
+- Findings: soft-start ≥ 2.5 s 0→99 % (shorter trips the brick); 100 nF across the
+  brushes cost 0.2 W in the MOSFET → 10 nF. Motor params are RS-550 estimates –
+  measure R and no-load current.
 
 ## Rendering / checks (run after every geometry change)
 ```bash
