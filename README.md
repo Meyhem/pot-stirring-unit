@@ -93,41 +93,47 @@ them with `-D 'style="three_piece"' -D 'part="cradle"'` (or `clamp`, `foot`).
 ## Electronics – motor power control (`electronics/`)
 
 The motor runs from a **19 V / 90 W laptop brick** (≈4.7 A). An Arduino Nano reads a
-**speed pot** and drives a low-side MOSFET with 20 kHz PWM. Current sensing gives stall
-detection and an over-current trip. The circuit is defined in code: `circuit.py`
-generates ngspice netlists and holds all the parameters, `sim.py` simulates and checks
-them, and `schematic.py` draws the schematic from the same values. The firmware isn't
-written yet.
+**speed pot** and drives a low-side MOSFET with 20 kHz PWM. A shunt resistor feeds an
+analog pin, so the firmware can spot a jammed paddle. There is no op-amp or
+comparator, just a few parts. The circuit is defined in code: `circuit.py` generates
+ngspice netlists and holds all the parameters, `sim.py` simulates and checks them, and
+`schematic.py` draws the schematic from the same values. The firmware isn't written yet.
 
 ![Schematic](img/circuit_schematic.png)
 
 - **Power path:** brick → 5 A slow fuse → SMBJ22A TVS + 1000 µF bulk cap → motor → IRLZ44N
-  (logic level, 100 Ω gate, 10 k pull-down) → 20 mΩ shunt → ground. SB540 Schottky
-  flyback diode, 10 nF across the brushes (100 nF costs +0.2 W in the MOSFET at 20 kHz).
-- **Sensing:** shunt → RC → LM358 ×22.4 → **A1** (0.448 V/A of *supply* current; motor
-  current = that / duty). The second LM358 half compares it with a 1.91 V reference
-  → **D2** (INT0) goes high above **4.3 A**, below the brick's limit. Bus divider → **A2**
-  (bus ÷ 5.55: the brick sagging or unplugged). Pot → **A0**.
-- **Logic power:** a buck module (MP1584 / LM2596) makes 5 V from the bus for the
-  Nano's 5V pin and the LM358.
+  (logic level, 100 Ω gate, 10 k pull-down) → **0.15 Ω / 5 W shunt** → ground. SB540
+  Schottky flyback diode, 10 nF across the brushes (100 nF costs +0.2 W in the MOSFET at 20 kHz).
+- **10 µF ceramic across the shunt:** a wire-wound (cement) shunt has ~1 µH of inductance.
+  It sits in the MOSFET's source, so without the cap the source jumps ±5 V on every
+  edge and the MOSFET loses 1.3 W. With the cap it's 0.34 W.
+- **Current sense:** shunt → 10 kΩ / 47 nF → **A1**. A1 = 0.15 V/A of *supply*
+  current (31 ADC counts/A). The motor current is A1 / duty, because the shunt only
+  carries current while the MOSFET is on. The 10 kΩ keeps the pin's clamp current small
+  when a full-speed jam drives the shunt to ~7 V.
+- **Stall rule (firmware):** read A1 every 0.5 ms. If two samples in a row are over
+  4.2 A supply current or over 8 A motor current, switch the PWM off.
+- **Pot → A0. Logic power:** a buck module (MP1584 / LM2596) makes 5 V from the bus for
+  the Nano's 5V pin.
 
 What the simulation shows (`make circuit` → [`electronics/sim_results.md`](electronics/sim_results.md)):
 
 | | |
 |---|---|
-| Start without a ramp (pot 0 → 60 %) | 42 A motor / 25 A supply peak, so the brick would shut down. **The firmware needs a soft-start.** |
-| Soft-start ramp 0 → 99 % | 1 s peaks at 5.5 A (too much). **2.5 s → 4.05 A**, under the brick limit, comparator stays low |
-| Full speed, normal load | ~19 400 rpm motor, 3.1 A |
-| Paddle jams at 60 % | D2 trips 5.6 ms after the jam, before the brick limit (6.7 ms). Without a PWM cut the motor would draw 35 A |
-| 20 kHz switching at 60 % | MOSFET 0.39 W, diode 0.39 W (no heatsinks needed), drain peak 21 V, A1 ripple 2.7 LSB |
+| Start without a ramp (pot 0 → 60 %) | 36 A motor / 21 A supply peak, so the brick would shut down. **The firmware needs a soft-start.** |
+| Soft-start ramp 0 → 99 % | 1 s peaks at 5.3 A (too much). **2.5 s → 4.0 A**, under the brick limit, no false stall |
+| Full speed, normal load | ~18 900 rpm motor, 3.1 A, A1 = 95 counts, shunt 1.45 W |
+| Paddle jams at 60 % / 30 % / 99 % | detected after 6.8 / 7.4 / 4.0 ms. The brick limit is reached at 7.5 / 17 / 4.2 ms, so detection always comes first. Without a PWM cut the motor would draw 35 A |
+| 20 kHz switching at 60 % | MOSFET 0.34 W, diode 0.38 W, shunt 0.7 W, drain peak 21 V, A1 ripple 3.5 counts |
 
 ![Start-up](img/circuit_sim_startup.png)
 ![Stall](img/circuit_sim_stall.png)
 ![Switching](img/circuit_sim_switching.png)
 
-The motor model is an RS-550 estimate (0.23 Ω, ke 0.0088 V·s/rad, 1.4 A no-load). The
-stirring load and jam torque are guesses. **Measure the motor's resistance and no-load
-current, then update `P` in `circuit.py`.**
+Mount the shunt with an air gap above the board, away from the printed parts: it runs
+at up to 3.3 W at the brick's limit. The motor model is an RS-550 estimate (0.23 Ω,
+ke 0.0088 V·s/rad, 1.4 A no-load). The stirring load and jam torque are guesses.
+**Measure the motor's resistance and no-load current, then update `P` in `circuit.py`.**
 
 ## Printing
 
