@@ -15,7 +15,8 @@ the stirring shaft sits above the food.
    `arm_y0` = 31.5 mm from the rod axis (Ø55 drill head radius + 4 mm). A printed
    foot holds its bottom end on the board at 60°; the motor cradle and the gearbox
    both grip it with cheeks + wood screws → motor and gearbox aligned by construction.
-   Not a printed part (plain wood), shown as a ghost in the assemblies.
+   Wood, OR the printed two-piece arm (`arm.scad`, user asked 2026-11-27).
+   `arm_len` 400 (near face, plate → top end at the gearbox cap) in common.scad.
 5. **Motor mount (bottom, beside the pot)** – `motor_mount.scad`. Default = ONE print
    (user's choice): foot plate + arm cheeks + split ring around the TOPOWER 550-18V
    motor (RS-550, Ø38 mm body). Three-piece variant (foot, sliding cradle, 2 clamp
@@ -33,6 +34,8 @@ the stirring shaft sits above the food.
 - `angled_gearbox.scad` – parametric gearbox (current version: v4). Needs BOSL2 + common.scad.
 - `motor_mount.scad` – one-piece motor mount (default) or three-piece variant.
   Plain OpenSCAD + common.scad.
+- `arm.scad` – printed arm (2 halves) + the **whole-unit assembly** (`part="assembly"`).
+  `use`s motor_mount.scad and angled_gearbox.scad (needs BOSL2).
 - `stl/` – exported parts at default parameters: gearbox (housing_a/b, gear_in/out,
   spacer) and motor_mount_one_piece. Three-piece STLs were removed as obsolete
   (user's call 2026-11-25); export them on demand with `-D 'style="three_piece"'`.
@@ -65,7 +68,7 @@ the stirring shaft sits above the food.
 - **After every iteration run `make all-in`** (= `make` + `make prune` + `make check`
   + `make images`) and fix anything that fails before committing:
   - `make` re-exports every printable part that changed (list in the Makefile:
-    `GEARBOX_PARTS`, `MOUNT_PARTS`) with `--hardwarnings` + `Simple: yes` check. It
+    `GEARBOX_PARTS`, `MOUNT_PARTS`, `ARM_PARTS`) with `--hardwarnings` + `Simple: yes` check. It
     keeps the old file when the geometry is unchanged (`tools/stl_same.py`: same
     vertex set + volume) – OpenSCAD re-exports reorder/re-triangulate otherwise.
   - `make prune` deletes STLs in `stl/` that aren't current parts → `stl/` = exactly
@@ -145,6 +148,26 @@ the stirring shaft sits above the food.
 - `part`: assembly, mount, cradle, clamp, clamps_x2, foot, print_all (follows `style`). Echo reports chuck
   clearance, motor height above the board and where the chuck ends.
 
+## Arm (arm.scad) – printed alternative to the wooden arm
+- Arm frame = motor mount's (z = 0 where the near face meets the plate). Bar
+  `aw` = arm_w + arm_clr − `arm_fit_clr` (0.2) = 20.4 wide → 0.1 mm/side in the
+  20.6 cheek gaps (user wants it snug). Bottom cut parallel to the board, top square.
+- Pilot holes Ø3.3 × 16 from both faces, positions from `mm_arm_screws()` (motor
+  mount) and `gb_arm_screws()` / `gb_arm_top()` (gearbox) – interface functions in
+  those files, because `use` only exposes modules/functions. Asserts: none in the lap.
+- Two halves, half-lap (`lap_len` 80) centred so both halves are equal (~252 mm);
+  3 M4 bolts across x (nut trap lower/−x, counterbore upper/+x). Each half exported
+  lying on its tongue side, turned 45° (fits 220 bed; assert checks it).
+- Whole unit: `unit()` = `mm_assembly()` + arm + `gb_from_input() gb_assembly()`
+  placed with the arm top at `gb_arm_top()`.
+- Fit checks (`arm_check`): arm_vs_mount, arm_vs_gearbox (arm shrunk 0.01 on contact
+  faces), arm_halves (upper shifted 0.01 in x AND z – lap plane + both shoulders
+  touch), pilots_vs_mount/gearbox (Ø3 pins out of every pilot hole must pass the
+  Ø4.5 cheek holes – verified to FAIL with a 1.5 mm shift).
+- Modules of files used by a used file are NOT visible to the outer file – a check
+  file calling `one_piece()` via `use <arm.scad>` gets "unknown module" and renders
+  empty; check_fit.py now fails on any WARNING for that reason.
+
 ## Electronics (electronics/) – power stage, circuit only (firmware not started)
 - 19 V / 90 W laptop brick (~4.7 A; it shuts down above that), Arduino Nano (assumed),
   speed pot on A0 → PWM D9 20 kHz → IRLZ44N low-side, SB540 flyback, 0.15 Ω / 5 W
@@ -170,10 +193,11 @@ make all-in     # build changed STLs, prune, check (mesh + fit), render images
 # scratch preview (headless) – write it outside the repo or as preview.png (ignored)
 xvfb-run -a openscad -o preview.png --imgsize=1400,1100 --camera=0,35,-15,62,0,125,400 -D 'part="assembly"' angled_gearbox.scad
 ```
-Fit checks (modules `gb_check` / `mm_check`, run by tools/check_fit.py, all EMPTY):
+Fit checks (modules `gb_check` / `mm_check` / `arm_check`, run by tools/check_fit.py, all EMPTY):
 gear_vs_gear, housing_vs_gears, axial_stop_out/in (gear shifted axial_gap−0.05
 towards the wall), mount_vs_motor, mount_vs_drill_head, mount_vs_arm (arm shrunk
-0.01 – face contact at the seat), mount_vs_board. Known by hand: shifting a gear
+0.01 – face contact at the seat), mount_vs_board, arm_vs_mount, arm_vs_gearbox,
+arm_halves, pilots_vs_mount, pilots_vs_gearbox. Known by hand: shifting a gear
 0.4 mm → contact only within the boss radius (never teeth).
 Motor mount: also read the echo (chuck clearance ≥ 4, lowest point ≥ board_clear)
 and look at a side view (`--camera=0,-50,100,90,0,90,650`).
@@ -198,5 +222,5 @@ modules inside the model, not in the check file.
   in the arm, no end-stop cap (~60 mm range, housing changes); B) two-piece arm +
   printed splice coupler, fixed screws in the lower piece, slots for the upper
   (100–150 mm range, housing unchanged). Rod just slides in the chuck either way.
-- No combined model of the full unit (gearbox + arm + motor mount) yet – both use
-  the same arm frame now, so it mostly needs an arm length / pot height parameter.
+- Pot fit: the whole-unit model has no pot yet – check gearbox height / shaft reach
+  against the real pot (arm_len 400 is the user's choice, not derived from a pot).

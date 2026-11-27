@@ -16,8 +16,9 @@ BED      ?= 220 220 250
 
 GEARBOX_PARTS := housing_a housing_b gear_in gear_out spacer
 MOUNT_PARTS   := motor_mount_one_piece
+ARM_PARTS     := arm_lower arm_upper
 
-STLS := $(GEARBOX_PARTS:%=stl/%.stl) $(MOUNT_PARTS:%=stl/%.stl)
+STLS := $(GEARBOX_PARTS:%=stl/%.stl) $(MOUNT_PARTS:%=stl/%.stl) $(ARM_PARTS:%=stl/%.stl)
 
 .PHONY: stl check check-stl check-fit prune images all-in rebuild circuit sim schematic
 .DEFAULT_GOAL := stl
@@ -43,6 +44,10 @@ $(GEARBOX_PARTS:%=stl/%.stl): stl/%.stl: angled_gearbox.scad common.scad
 
 stl/motor_mount_one_piece.stl: motor_mount.scad common.scad
 	$(call export,mount,motor_mount.scad)
+
+# the arm reads its pilot-hole positions from both models
+stl/arm_%.stl: arm.scad common.scad motor_mount.scad angled_gearbox.scad
+	$(call export,$*,arm.scad)
 
 check: check-stl check-fit
 

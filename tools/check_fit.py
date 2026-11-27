@@ -27,6 +27,11 @@ CHECKS = [
     ("mount_vs_drill_head", "motor_mount.scad",    'mm_check("mount_vs_drill_head");'),
     ("mount_vs_arm",        "motor_mount.scad",    'mm_check("mount_vs_arm");'),
     ("mount_vs_board",      "motor_mount.scad",    'mm_check("mount_vs_board");'),
+    ("arm_vs_mount",        "arm.scad",            'arm_check("arm_vs_mount");'),
+    ("arm_vs_gearbox",      "arm.scad",            'arm_check("arm_vs_gearbox");'),
+    ("arm_halves",          "arm.scad",            'arm_check("arm_halves");'),
+    ("pilots_vs_mount",     "arm.scad",            'arm_check("pilots_vs_mount");'),
+    ("pilots_vs_gearbox",   "arm.scad",            'arm_check("pilots_vs_gearbox");'),
 ]
 
 
@@ -38,9 +43,10 @@ def run(check, tmp):
     out = subprocess.run([OPENSCAD, "-o", os.path.join(tmp, name + ".stl"), scad],
                          capture_output=True, text=True)
     log = out.stdout + out.stderr
-    if "Current top level object is empty" in log:
-        return name, True, ""
     bad = [l for l in log.splitlines() if "WARNING" in l or "ERROR" in l]
+    # an unknown module/variable also renders "empty" – never let a warning pass
+    if "Current top level object is empty" in log and not bad:
+        return name, True, ""
     vol = [l.strip() for l in log.splitlines() if "Volumes" in l]
     return name, False, "; ".join(bad + vol) or "intersection is not empty"
 

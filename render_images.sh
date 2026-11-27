@@ -35,4 +35,12 @@ R=(render)
 "${R[@]}" --render -o img/motor_mount_print_parts.png --camera=0,-20,50,120,0,40,420 \
     -D 'part="mount"' motor_mount.scad
 
+# Whole unit + printed arm
+"${R[@]}" -o img/unit.png --camera=0,-80,200,90,0,90,1100 \
+    -D 'part="assembly"' arm.scad
+"${R[@]}" -o img/unit_3d.png --camera=0,-80,190,62,0,230,1000 \
+    -D 'part="assembly"' arm.scad
+"${R[@]}" --render -o img/arm_print_parts.png --camera=0,0,0,50,0,15,600 \
+    -D 'part="print_all"' arm.scad
+
 echo "images updated in img/"

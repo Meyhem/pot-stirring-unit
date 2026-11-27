@@ -24,7 +24,12 @@ chuck_clr = 4;        // air between the drill head and the arm
 /* [Shared: wooden arm (20x40 on edge)] */
 arm_w    = 20;        // across (x)
 arm_t    = 40;        // in the shaft plane (y) = bending direction
-arm_clr  = 0.6;       // play around the wood in printed cheeks
+arm_clr  = 0.6;       // play around the arm in the printed cheeks (cheek gap = arm_w + arm_clr)
+// arm length along its near face (the face towards the rod), from the foot
+// plate up to the top end that rests against the gearbox cap; the far face is
+// arm_t*tan(shaft_angle) (23 mm) longer because the bottom end is cut parallel
+// to the board
+arm_len  = 400;
 // distance from the rod axis to the arm's near face – set by the chuck
 arm_y0   = chuck_d/2 + chuck_clr;
 

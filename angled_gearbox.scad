@@ -362,6 +362,26 @@ module gb_check(what) {
 }
 
 // ---------------------------------------------------------------------
+// Interface for arm.scad (which `use`s this file): where the arm sits
+// ---------------------------------------------------------------------
+// arm top end position along the input axis (input frame z) – the cap face
+function gb_arm_top() = arm_top;
+// wood screw holes into the arm: [side, y, z] in the input frame
+function gb_arm_screws() = [for (sx = [-1, 1], p = arm_screw_yz(sx, arm_y0, sock_bot, socket_len)) [sx, p[0], p[1]]];
+// inverse of in_frame(): places gearbox-frame children into the input frame
+module gb_from_input() { fwd(rP) xrot(-shaft_angle) fwd(rG) children(); }
+// the assembled gearbox (cutaway or closed), gearbox frame
+module gb_assembly(cutaway = true, ghost_arm = true) {
+    color("orange") gear_out();
+    color("lightblue") in_frame() gear_in();
+    shafts();
+    bearings();
+    color("gray", 0.9) half(-1);
+    if (!cutaway) color("gray", 0.5) half(1);
+    if (mount && ghost_arm) arm_ghost();
+}
+
+// ---------------------------------------------------------------------
 // Output
 // ---------------------------------------------------------------------
 module shafts() {
@@ -378,15 +398,7 @@ module bearings() {
     }
 }
 
-if (part == "assembly") {
-    color("orange") gear_out();
-    color("lightblue") in_frame() gear_in();
-    shafts();
-    bearings();
-    color("gray", 0.9) half(-1);
-    if (!show_cutaway) color("gray", 0.5) half(1);
-    if (mount) arm_ghost();
-}
+if (part == "assembly") gb_assembly(show_cutaway);
 else if (part == "housing_a") yrot(-90) half(1);    // split face down
 else if (part == "housing_b") yrot(90)  half(-1);   // split face down
 else if (part == "gear_out")  up(gear_back) gear_out();

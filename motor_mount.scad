@@ -123,7 +123,6 @@ board_clear = 10;    // minimum air between motor/clamps/terminals and the board
 // motor rear face position along the arm, measured on the arm near face from
 // the foot plate; 0 = lowest position that respects board_clear and the foot
 motor_z_set = 0;
-arm_len     = 420;   // only for the ghost
 
 $fn = 96;
 eps = 0.01;
@@ -355,12 +354,33 @@ module motor_ghost() {
 module arm_ghost() {
     // bottom end cut parallel to the board
     %intersection() {
-        ARM() translate([-arm_w/2, arm_y0, -2*arm_t]) cube([arm_w, arm_t, arm_len]);
+        ARM() translate([-arm_w/2, arm_y0, -2*arm_t]) cube([arm_w, arm_t, arm_len + 2*arm_t]);
         translate([-100, -500, base_t]) cube([200, 1000, 1000]);
     }
 }
 module board_ghost() {
     %translate([-60, plate_y0 - 140, -18]) cube([120, plate_y1 - plate_y0 + 200, 18]);
+}
+
+// ---------------------------------------------------------------------
+// Interface for arm.scad (which `use`s this file)
+// ---------------------------------------------------------------------
+// wood screw holes into the arm: [side, y, z] in the arm frame (z = 0 where the
+// arm's near face meets the plate). three_piece: only the foot (the cradle slides).
+function mm_arm_screws() = style == "one_piece"
+    ? [for (sx = [-1, 1], seg = [0, 1], p = arm_screw_yz(sx, arm_y0, seg*op_top/2, op_top/2)) [sx, p[0], p[1]]]
+    : [for (sx = [-1, 1], p = arm_screw_yz(sx, arm_y0, 0, foot_len)) [sx, p[0], p[1]]];
+module mm_assembly() {
+    if (style == "one_piece") color("lightsteelblue") one_piece();
+    else {
+        color("lightsteelblue") foot();
+        ARM() translate([0, 0, motor_z]) {
+            color("lightsteelblue") cradle();
+            for (z = clamp_z) color("tomato") translate([0, 0, z - clamp_w/2]) clamp();
+        }
+    }
+    ARM() translate([0, 0, motor_z]) motor_ghost();
+    board_ghost();
 }
 
 // ---------------------------------------------------------------------

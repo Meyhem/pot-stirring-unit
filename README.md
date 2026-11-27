@@ -3,7 +3,7 @@
 A 3D-printed automatic stirrer for a pot on the stove. The motor sits **beside**
 the pot, so nothing but a small gearbox and the stirring shaft is above the food.
 
-![Gearbox cutaway](img/gearbox_cutaway.png)
+![The whole unit](img/unit.png)
 
 ## How it works
 
@@ -20,9 +20,10 @@ the pot, so nothing but a small gearbox and the stirring shaft is above the food
         └─── pot ─────┘   ─────────────── board next to the stove
 ```
 
-1. **Wooden arm:** 20×40 mm, standing on edge (the 40 mm side in the bending plane).
-   It is the spine of the whole unit: a printed **foot** holds its bottom end on the
-   board at 60°, and the motor cradle and the gearbox both grip it.
+1. **Arm:** 20×40 mm, 400 mm long, standing on edge (the 40 mm side in the bending
+   plane). Wood, or the printed two-piece arm below. It is the spine of the whole
+   unit: the motor mount holds its bottom end on the board at 60°, and the gearbox
+   grips its top end.
 2. **Motor:** TOPOWER 550-18V (RS-550 class, Ø38 mm), in a printed cradle that hangs
    under the arm, on the same axis as the gearbox input.
 3. **Drill head:** the motor drives a drill head: a planetary gearbox, a clutch collar
@@ -90,6 +91,29 @@ A three-part version (separate foot, a cradle that slides along the arm, and 2 c
 caps) is still in the source as `style="three_piece"`. It has no ready-made STLs; export
 them with `-D 'style="three_piece"' -D 'part="cradle"'` (or `clamp`, `foot`).
 
+## Arm – `arm.scad` (printed alternative to the wooden arm)
+
+| Whole unit | The two halves |
+|---|---|
+| ![unit 3D](img/unit_3d.png) | ![arm halves](img/arm_print_parts.png) |
+
+- **400 mm** along the face towards the rod (423 mm along the outer face). The bottom
+  end is cut at 30° so it sits flat on the motor mount's plate; the square top end
+  rests against the gearbox's end-stop cap.
+- **Snug fit:** printed 20.4 mm wide for the 20.6 mm cheek gaps (0.1 mm per side).
+- **Pilot holes (Ø3.3)** exactly where the motor mount (8) and gearbox (4) wood screws
+  go. Their positions are read from those two models, so they always match.
+- **Two halves** (a 400 mm bar doesn't fit a 220 mm bed): a half-lap joint in the
+  middle, 80 mm long, with 3× M4×16 bolts (nut trap on the lower half, counterbore on
+  the upper). Glue the lap faces with epoxy for extra stiffness.
+- Each half prints lying on its side, turned 45° on the bed (about 206 × 206 mm), no supports.
+  Use 5+ perimeters and 40%+ infill: it carries the gearbox out over the pot.
+- A printed arm is softer than wood and PETG creeps when warm, so keep it out of the steam.
+- `arm.scad` with `part="assembly"` renders the **whole unit**: board, motor mount and
+  motor, arm and gearbox.
+
+**Hardware:** 3× M4×16 socket head + 3× M4 nut (lap joint), optional epoxy.
+
 ## Electronics – motor power control (`electronics/`)
 
 The motor runs from a **19 V / 90 W laptop brick** (≈4.7 A). An Arduino Nano reads a
@@ -143,6 +167,7 @@ ke 0.0088 V·s/rad, 1.4 A no-load). The stirring load and jam torque are guesses
 | `gear_out.stl`, `gear_in.stl` | 1 each | none |
 | `spacer.stl` | **2** (one per gear; the output gear needs it, the input one is optional) | none |
 | `motor_mount_one_piece.stl` | 1 | build plate only (under the back of the motor ring) |
+| `arm_lower.stl`, `arm_upper.stl` | 1 each (only if you don't use a wooden arm) | none |
 
 All STLs are already in print orientation.
 
@@ -190,7 +215,9 @@ A single part by hand: `openscad -o x.stl -D 'part="housing_a"' angled_gearbox.s
   `tools/check_stl.py some.stl`.
 - **`tools/check_fit.py`** – geometry checks in OpenSCAD; each one must come out
   empty: gear vs gear, housing vs gears, the axial stops (a gear pushed 0.25 mm towards
-  the wall must not touch it), and motor mount vs motor, drill head, arm and board.
+  the wall must not touch it), motor mount vs motor, drill head, arm and board, and
+  the printed arm vs motor mount and gearbox, its two halves, and that every pilot
+  hole lines up with its cheek screw hole. Any OpenSCAD warning counts as a failure.
 
 ## Status / open items
 
@@ -205,4 +232,5 @@ A single part by hand: `openscad -o x.stl -D 'part="housing_a"' angled_gearbox.s
 - [ ] Arduino firmware: soft-start ramp, stall detection (A1), D2 trip, brick sag (A2)
 - [ ] Wooden paddle
 - [ ] Adjustable arm length (parked for now)
-- [ ] Full-unit assembly model (gearbox + arm + motor mount)
+- [x] Full-unit assembly model (`arm.scad`, `part="assembly"`)
+- [x] Printed 400 mm arm (two halves, lap joint, pilot holes)
