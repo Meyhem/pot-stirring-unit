@@ -8,7 +8,8 @@
 #   make all-in     everything above, in order (what to run after each iteration)
 #   make rebuild    force re-export of every STL
 #
-# Add a new printable part: add it to GEARBOX_PARTS or a rule below.
+# Add a new printable part: add it to a *_PARTS list and a rule below.
+# Parts meant to be cut in the slicer go into OVERSIZE (no bed-size check).
 
 OPENSCAD ?= openscad
 PYTHON   ?= python3
@@ -16,7 +17,9 @@ BED      ?= 220 220 250
 
 GEARBOX_PARTS := housing_a housing_b gear_in gear_out spacer
 MOUNT_PARTS   := motor_mount_one_piece
-ARM_PARTS     := arm_lower arm_upper
+ARM_PARTS     := arm
+# allowed to be bigger than the bed: the user cuts these in the slicer
+OVERSIZE      := stl/arm.stl
 
 STLS := $(GEARBOX_PARTS:%=stl/%.stl) $(MOUNT_PARTS:%=stl/%.stl) $(ARM_PARTS:%=stl/%.stl)
 
@@ -45,14 +48,15 @@ $(GEARBOX_PARTS:%=stl/%.stl): stl/%.stl: angled_gearbox.scad common.scad
 stl/motor_mount_one_piece.stl: motor_mount.scad common.scad
 	$(call export,mount,motor_mount.scad)
 
-# the arm reads its pilot-hole positions from both models
-stl/arm_%.stl: arm.scad common.scad motor_mount.scad angled_gearbox.scad
-	$(call export,$*,arm.scad)
+# one piece, longer than the bed (cut it in the slicer); it reads its pilot-hole
+# positions from both models
+stl/arm.stl: arm.scad common.scad motor_mount.scad angled_gearbox.scad
+	$(call export,print,arm.scad)
 
 check: check-stl check-fit
 
 check-stl: $(STLS)
-	@$(PYTHON) tools/check_stl.py --bed $(BED) $(STLS)
+	@$(PYTHON) tools/check_stl.py --bed $(BED) --oversize $(OVERSIZE) -- $(STLS)
 
 check-fit:
 	@$(PYTHON) tools/check_fit.py

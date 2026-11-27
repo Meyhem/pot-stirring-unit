@@ -15,7 +15,8 @@ the stirring shaft sits above the food.
    `arm_y0` = 31.5 mm from the rod axis (Ø55 drill head radius + 4 mm). A printed
    foot holds its bottom end on the board at 60°; the motor cradle and the gearbox
    both grip it with cheeks + wood screws → motor and gearbox aligned by construction.
-   Wood, OR the printed two-piece arm (`arm.scad`, user asked 2026-11-27).
+   Wood, OR the printed arm (`arm.scad`, user asked 2026-11-27; ONE piece – the
+   user cuts it in the slicer).
    `arm_len` 400 (near face, plate → top end at the gearbox cap) in common.scad.
 5. **Motor mount (bottom, beside the pot)** – `motor_mount.scad`. Default = ONE print
    (user's choice): foot plate + arm cheeks + split ring around the TOPOWER 550-18V
@@ -34,7 +35,7 @@ the stirring shaft sits above the food.
 - `angled_gearbox.scad` – parametric gearbox (current version: v4). Needs BOSL2 + common.scad.
 - `motor_mount.scad` – one-piece motor mount (default) or three-piece variant.
   Plain OpenSCAD + common.scad.
-- `arm.scad` – printed arm (2 halves) + the **whole-unit assembly** (`part="assembly"`).
+- `arm.scad` – printed arm (one piece, `part="print"`) + the **whole-unit assembly** (`part="assembly"`).
   `use`s motor_mount.scad and angled_gearbox.scad (needs BOSL2).
 - `stl/` – exported parts at default parameters: gearbox (housing_a/b, gear_in/out,
   spacer) and motor_mount_one_piece. Three-piece STLs were removed as obsolete
@@ -74,7 +75,7 @@ the stirring shaft sits above the food.
   - `make prune` deletes STLs in `stl/` that aren't current parts → `stl/` = exactly
     what to print. New/renamed part → update the Makefile lists + rules.
   - `make check` = `tools/check_stl.py` (watertight, manifold, winding, volume,
-    1 body, fits 220×220×250 bed; slivers from OpenSCAD's 6-digit output are only
+    1 body, fits 220×220×250 bed except `OVERSIZE` files (arm); slivers from OpenSCAD's 6-digit output are only
     reported) + `tools/check_fit.py` (all fit checks must be EMPTY).
   - New fit check → add a branch to `gb_check()` / `mm_check()` in the model and a
     line to `CHECKS` in tools/check_fit.py.
@@ -154,15 +155,16 @@ the stirring shaft sits above the food.
   20.6 cheek gaps (user wants it snug). Bottom cut parallel to the board, top square.
 - Pilot holes Ø3.3 × 16 from both faces, positions from `mm_arm_screws()` (motor
   mount) and `gb_arm_screws()` / `gb_arm_top()` (gearbox) – interface functions in
-  those files, because `use` only exposes modules/functions. Asserts: none in the lap.
-- Two halves, half-lap (`lap_len` 80) centred so both halves are equal (~252 mm);
-  3 M4 bolts across x (nut trap lower/−x, counterbore upper/+x). Each half exported
-  lying on its tongue side, turned 45° (fits 220 bed; assert checks it).
+  those files, because `use` only exposes modules/functions.
+- ONE piece (user's call: "I will slice it in the slicer" – they cut it with the
+  slicer's cut tool). Exported lying on its −x face, 423×40×20.4. Longer than the
+  bed → `OVERSIZE` in the Makefile exempts it from the bed check (`--oversize`).
+  Pilots occupy z 13–90 and 374–394 → safe cut zone ~110–350 (README says so).
+  An earlier two-half / half-lap version (3 M4 bolts) was dropped 2026-11-27.
 - Whole unit: `unit()` = `mm_assembly()` + arm + `gb_from_input() gb_assembly()`
   placed with the arm top at `gb_arm_top()`.
 - Fit checks (`arm_check`): arm_vs_mount, arm_vs_gearbox (arm shrunk 0.01 on contact
-  faces), arm_halves (upper shifted 0.01 in x AND z – lap plane + both shoulders
-  touch), pilots_vs_mount/gearbox (Ø3 pins out of every pilot hole must pass the
+  faces), pilots_vs_mount/gearbox (Ø3 pins out of every pilot hole must pass the
   Ø4.5 cheek holes – verified to FAIL with a 1.5 mm shift).
 - Modules of files used by a used file are NOT visible to the outer file – a check
   file calling `one_piece()` via `use <arm.scad>` gets "unknown module" and renders
@@ -197,7 +199,7 @@ Fit checks (modules `gb_check` / `mm_check` / `arm_check`, run by tools/check_fi
 gear_vs_gear, housing_vs_gears, axial_stop_out/in (gear shifted axial_gap−0.05
 towards the wall), mount_vs_motor, mount_vs_drill_head, mount_vs_arm (arm shrunk
 0.01 – face contact at the seat), mount_vs_board, arm_vs_mount, arm_vs_gearbox,
-arm_halves, pilots_vs_mount, pilots_vs_gearbox. Known by hand: shifting a gear
+pilots_vs_mount, pilots_vs_gearbox. Known by hand: shifting a gear
 0.4 mm → contact only within the boss radius (never teeth).
 Motor mount: also read the echo (chuck clearance ≥ 4, lowest point ≥ board_clear)
 and look at a side view (`--camera=0,-50,100,90,0,90,650`).

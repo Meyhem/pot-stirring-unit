@@ -29,7 +29,6 @@ CHECKS = [
     ("mount_vs_board",      "motor_mount.scad",    'mm_check("mount_vs_board");'),
     ("arm_vs_mount",        "arm.scad",            'arm_check("arm_vs_mount");'),
     ("arm_vs_gearbox",      "arm.scad",            'arm_check("arm_vs_gearbox");'),
-    ("arm_halves",          "arm.scad",            'arm_check("arm_halves");'),
     ("pilots_vs_mount",     "arm.scad",            'arm_check("pilots_vs_mount");'),
     ("pilots_vs_gearbox",   "arm.scad",            'arm_check("pilots_vs_gearbox");'),
 ]

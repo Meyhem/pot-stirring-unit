@@ -40,7 +40,7 @@ R=(render)
     -D 'part="assembly"' arm.scad
 "${R[@]}" -o img/unit_3d.png --camera=0,-80,190,62,0,230,1000 \
     -D 'part="assembly"' arm.scad
-"${R[@]}" --render -o img/arm_print_parts.png --camera=0,0,0,50,0,15,600 \
-    -D 'part="print_all"' arm.scad
+"${R[@]}" --render -o img/arm_print_parts.png --camera=0,0,0,55,0,60,820 \
+    -D 'part="print"' arm.scad
 
 echo "images updated in img/"

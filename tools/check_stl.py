@@ -9,13 +9,15 @@ For each file it checks:
   - consistent winding: every directed edge appears exactly once
   - positive volume (normals point outwards)
   - number of separate bodies (shells) – more than 1 fails unless --allow-multi
-  - fits the print bed (--bed X Y Z, default 220 220 250)
+  - fits the print bed (--bed X Y Z, default 220 220 250); files listed with
+    --oversize may be bigger (they get cut in the slicer) – only reported
 
 Exit code 0 = all files OK, 1 = at least one problem.
 
-Usage: tools/check_stl.py [--bed 220 220 250] [--allow-multi] file.stl ...
+Usage: tools/check_stl.py [--bed 220 220 250] [--oversize big.stl ...] [--allow-multi] file.stl ...
 """
 import argparse
+import os
 import struct
 import sys
 from collections import Counter
@@ -53,7 +55,7 @@ def cross(a, b):
     return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
 
 
-def check(path, bed, allow_multi, sliver_area=1e-4):
+def check(path, bed, allow_multi, oversize=False, sliver_area=1e-4):
     problems = []
     try:
         tris = read_stl(path)
@@ -124,12 +126,14 @@ def check(path, bed, allow_multi, sliver_area=1e-4):
 
     xs, ys, zs = zip(*(p for t in tris for p in t))
     size = (max(xs) - min(xs), max(ys) - min(ys), max(zs) - min(zs))
-    if any(s > b for s, b in zip(size, bed)):
+    too_big = any(s > b for s, b in zip(size, bed))
+    if too_big and not oversize:
         problems.append("does not fit the bed {}x{}x{}: size {:.1f} x {:.1f} x {:.1f}".format(*bed, *size))
     if min(zs) < -1e-3 or min(zs) > 1e-3:
         problems.append(f"lowest point is z={min(zs):.3f}, not on the bed (z=0)")
 
-    stats = dict(triangles=len(tris), volume=volume, shells=shells, size=size, slivers=slivers)
+    stats = dict(triangles=len(tris), volume=volume, shells=shells, size=size, slivers=slivers,
+                 cut=too_big and oversize)
     return problems, stats
 
 
@@ -138,14 +142,19 @@ def main():
     ap.add_argument("files", nargs="+")
     ap.add_argument("--bed", nargs=3, type=float, default=[220, 220, 250], metavar=("X", "Y", "Z"))
     ap.add_argument("--allow-multi", action="store_true", help="allow more than one body per file")
+    ap.add_argument("--oversize", nargs="*", default=[], metavar="FILE",
+                    help="files allowed to exceed the bed (cut in the slicer)")
     args = ap.parse_args()
 
     bad = 0
     for path in args.files:
-        problems, s = check(path, args.bed, args.allow_multi)
+        problems, s = check(path, args.bed, args.allow_multi,
+                            oversize=os.path.normpath(path) in {os.path.normpath(p) for p in args.oversize})
         if s:
             info = "{:>6} tris {:>7.1f} cm³  {:5.1f} x {:5.1f} x {:5.1f} mm".format(
                 s["triangles"], s["volume"] / 1000, *s["size"])
+            if s["cut"]:
+                info += "  (bigger than the bed – cut it in the slicer)"
             if s["slivers"]:
                 info += f"  ({s['slivers']} harmless slivers)"
         else:
